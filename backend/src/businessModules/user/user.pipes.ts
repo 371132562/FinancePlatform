@@ -6,8 +6,8 @@ import { ErrorCode } from '../../../types/response';
 import { BusinessException } from '../../common/exceptions/businessException';
 
 /**
- * 用户编号唯一性验证Pipe
- * 用途：验证用户编号是否已存在，如果存在则抛出异常
+ * 用户名唯一性验证Pipe
+ * 用途：验证用户名是否已存在，如果存在则抛出异常
  * 使用场景：创建用户时的编号验证
  */
 @Injectable()
@@ -29,7 +29,7 @@ export class UserCodeExistsValidationPipe implements PipeTransform {
     });
 
     if (exist) {
-      throw new BusinessException(ErrorCode.USER_CODE_EXIST, '用户编号已存在');
+      throw new BusinessException(ErrorCode.USER_CODE_EXIST, '用户名已存在');
     }
 
     return value;

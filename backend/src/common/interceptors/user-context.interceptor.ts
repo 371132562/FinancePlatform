@@ -13,7 +13,7 @@ import { RequestContext } from '../context/request-context.utils';
  * 用户上下文写入拦截器（UserContextInterceptor）
  * 用途：在 Jwt 守卫通过后，将 req.user 中的关键用户标识写入 RequestContext
  * 上游：JwtAuthGuard -> JwtStrategy.validate 填充 req.user
- * 下游：WinstonLoggerService 从 RequestContext 读取用户，统一日志前缀 [用户编号] [用户名称]
+ * 下游：WinstonLoggerService 从 RequestContext 读取用户，统一日志前缀 [用户名] [用户名称]
  */
 @Injectable()
 export class UserContextInterceptor implements NestInterceptor {

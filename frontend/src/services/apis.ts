@@ -38,3 +38,19 @@ export const systemLogsRead = '/system/logs/read' // 读取系统日志内容
 export const systemUserLogsListFiles = '/system/logs/user/files' // 获取用户日志文件列表
 export const systemUserLogsRead = '/system/logs/user/read' // 读取用户日志内容
 export const systemUserLogsList = '/system/logs/user/list' // 获取用户日志列表
+
+// 工作项相关 API
+export const workTaskListApiUrl = '/workTask/list' // 获取工作项列表
+export const workTaskDetailApiUrl = '/workTask/detail' // 获取工作项详情
+export const workTaskCreateApiUrl = '/workTask/create' // 创建工作项
+export const workTaskUpdateApiUrl = '/workTask/update' // 更新工作项
+export const workTaskDeleteApiUrl = '/workTask/delete' // 删除工作项
+export const workTaskCommentCreateApiUrl = '/workTask/comment/create' // 创建评论
+export const workTaskCommentDeleteApiUrl = '/workTask/comment/delete' // 删除评论
+
+// 通知相关 API
+export const notificationListApiUrl = '/notification/list' // 获取通知列表
+export const notificationUnreadCountApiUrl = '/notification/unreadCount' // 获取未读通知数量
+export const notificationMarkReadApiUrl = '/notification/markRead' // 标记通知已读
+export const notificationMarkAllReadApiUrl = '/notification/markAllRead' // 标记所有通知已读
+export const notificationDeleteApiUrl = '/notification/delete' // 删除通知

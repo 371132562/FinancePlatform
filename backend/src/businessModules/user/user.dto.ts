@@ -23,7 +23,7 @@ export type UserItem = {
  */
 export class CreateUserDto {
   @IsString()
-  @IsNotEmpty({ message: '用户编码不能为空' })
+  @IsNotEmpty({ message: '用户名不能为空' })
   code: string;
 
   @IsString()
@@ -142,7 +142,7 @@ export type ResetPassword = InstanceType<typeof ResetPasswordDto>;
  */
 export class CreateUserEncryptedDto {
   @IsString()
-  @IsNotEmpty({ message: '用户编码不能为空' })
+  @IsNotEmpty({ message: '用户名不能为空' })
   code: string;
 
   @IsString()

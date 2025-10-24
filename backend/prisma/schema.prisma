@@ -3,7 +3,7 @@
 
 // 指定生成器，这里是 Prisma Client for JavaScript
 generator client {
-  provider      = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 // 定义数据源，这里使用 SQLite
@@ -15,7 +15,7 @@ datasource db {
 // 用户表
 model User {
   id         String   @id @default(uuid()) // 主键ID（UUID）
-  code       String   @unique // 用户编号（唯一）
+  code       String   @unique // 用户名（唯一）
   name       String // 用户姓名
   department String // 所属部门
   email      String? // 邮箱地址（可选）
@@ -26,6 +26,11 @@ model User {
   createTime DateTime @default(now())
   updateTime DateTime @updatedAt
   delete     Int      @default(0) // 软删除标记，0表示未删除，1表示已删除
+
+  // 工作项相关关联
+  createdTasks  WorkTask[]        @relation("TaskCreator")
+  comments      WorkTaskComment[] @relation("CommentUser")
+  notifications Notification[]    @relation("UserNotifications")
 
   @@unique([code, delete]) // 邮箱在未删除状态下唯一
   @@index([id])
@@ -48,7 +53,6 @@ model Role {
   @@index([id])
   @@index([name, delete])
 }
-
 
 // 文章管理表
 model Article {
@@ -88,4 +92,59 @@ model Image {
 
   @@unique([hash, delete])
   @@index([id, delete])
+}
+
+// 工作项表
+model WorkTask {
+  id              String            @id @default(uuid())
+  title           String // 工作标题
+  description     String // 工作描述（长文本）
+  status          String            @default("未完成") // 状态：未完成、进行中、有风险、已完成、已停止
+  creatorId       String // 创建人ID
+  creator         User              @relation("TaskCreator", fields: [creatorId], references: [id])
+  assignedUserIds Json              @default("[]") // 关联员工ID数组
+  companyId       String? // 关联企业ID（可选，为后续扩展预留）
+  createTime      DateTime          @default(now())
+  updateTime      DateTime          @updatedAt
+  delete          Int               @default(0)
+  comments        WorkTaskComment[]
+
+  @@index([creatorId, delete])
+  @@index([status, delete])
+}
+
+// 工作评论表
+model WorkTaskComment {
+  id         String   @id @default(uuid())
+  taskId     String // 工作项ID
+  task       WorkTask @relation(fields: [taskId], references: [id])
+  userId     String // 评论人ID
+  user       User     @relation("CommentUser", fields: [userId], references: [id])
+  content    String // 评论内容（长文本）
+  createTime DateTime @default(now())
+  updateTime DateTime @updatedAt
+  delete     Int      @default(0)
+
+  @@index([taskId, delete])
+  @@index([userId, delete])
+}
+
+// 通知表
+model Notification {
+  id         String   @id @default(uuid())
+  userId     String // 接收通知的用户ID
+  user       User     @relation("UserNotifications", fields: [userId], references: [id])
+  module     String   @default("work") // 业务模块：work（工作）、article（文章）、user（用户）、system（系统）
+  type       String // 通知类型：assigned（分配）、updated（更新）、completed（完成）、commented（评论）
+  title      String // 通知标题
+  content    String // 通知内容
+  relatedId  String? // 关联的业务ID（如taskId）
+  isRead     Int      @default(0) // 是否已读：0未读，1已读
+  createTime DateTime @default(now())
+  updateTime DateTime @updatedAt
+  delete     Int      @default(0)
+
+  @@index([userId, isRead, delete])
+  @@index([userId, createTime, delete])
+  @@index([module, type, delete])
 }

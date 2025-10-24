@@ -34,6 +34,14 @@ export enum ErrorCode {
   ARTICLE_NOT_FOUND = 40021, // 文章不存在
   ARTICLE_TITLE_EXIST = 40022, // 文章标题已存在
 
+  // 工作项管理相关错误 (4xxxx)
+  TASK_NOT_FOUND = 40031, // 工作项不存在
+  TASK_NO_PERMISSION = 40032, // 无权限访问该工作项
+  TASK_COMMENT_NOT_FOUND = 40033, // 评论不存在
+
+  // 通知管理相关错误 (4xxxx)
+  NOTIFICATION_NOT_FOUND = 40041, // 通知不存在
+
   // 系统内部错误 (5xxxx)
   SYSTEM_ERROR = 50000, // 通用系统内部错误
   UNKNOWN_ERROR = 50001, // 未知错误

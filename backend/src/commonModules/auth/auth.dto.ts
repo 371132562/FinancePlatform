@@ -11,7 +11,7 @@ import type { UserItem } from '../../businessModules/user/user.dto';
  */
 export class LoginDto {
   @IsString()
-  @IsNotEmpty({ message: '用户编码不能为空' })
+  @IsNotEmpty({ message: '用户名不能为空' })
   code: string;
 
   @IsString()
@@ -48,7 +48,7 @@ export type UserProfileDto = UserItem;
  */
 export class LoginWithHashDto {
   @IsString()
-  @IsNotEmpty({ message: '用户编码不能为空' })
+  @IsNotEmpty({ message: '用户名不能为空' })
   code: string;
 
   @IsString()

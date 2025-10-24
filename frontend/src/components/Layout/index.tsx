@@ -1,7 +1,9 @@
 import { LoginOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons' // 导入图标
 import {
   Avatar,
+  Badge,
   Breadcrumb,
+  Button,
   Dropdown,
   FloatButton,
   Layout,
@@ -16,8 +18,14 @@ import { Link, useLocation, useNavigate, useOutlet } from 'react-router'
 
 import ErrorPage from '@/components/Error'
 import Forbidden from '@/components/Forbidden'
-import { getBreadcrumbItems, getSideMenuRoutes, getTopMenuRoutes } from '@/router/routesConfig'
+import {
+  getAllRoutes,
+  getBreadcrumbItems,
+  getSideMenuRoutes,
+  getTopMenuRoutes
+} from '@/router/routesConfig'
 import { useAuthStore } from '@/stores/authStore'
+import { useNotificationStore } from '@/stores/notificationStore'
 
 const { Header, Sider, Content /* Footer */ } = Layout
 
@@ -39,6 +47,17 @@ export const Component: FC = () => {
   const { pathname } = useLocation()
   const scrollRef = useRef<HTMLDivElement | null>(null)
 
+  // 通知相关状态
+  const {
+    unreadCount,
+    notifications,
+    fetchUnreadCount,
+    fetchNotifications,
+    markAsRead,
+    markAllAsRead,
+    clearNotifications
+  } = useNotificationStore()
+
   // 主动获取用户信息
   useEffect(() => {
     // 有token时，无条件获取用户信息来验证token有效性
@@ -47,8 +66,80 @@ export const Component: FC = () => {
     }
   }, [token, fetchProfile])
 
+  // 获取未读通知数量（定时轮询）
+  useEffect(() => {
+    if (token) {
+      fetchUnreadCount()
+      // 每30秒轮询一次
+      const interval = setInterval(() => {
+        fetchUnreadCount()
+      }, 30000)
+      return () => clearInterval(interval)
+    }
+  }, [token, fetchUnreadCount])
+
+  // 获取通知列表（只获取未读通知）
+  useEffect(() => {
+    if (token) {
+      fetchNotifications({ pageSize: 3, isRead: 0 })
+    }
+  }, [token, fetchNotifications])
+
   const handleMenuClick: MenuProps['onClick'] = e => {
     navigate(e.key)
+  }
+
+  // 通知项组件
+  const NotificationItem = ({
+    notification
+  }: {
+    notification: {
+      id: string
+      module: string
+      type: string
+      title: string
+      content: string
+      isRead: number
+      relatedId?: string | null
+      createTime: Date
+    }
+  }) => {
+    // 根据模块和类型生成跳转URL
+    const getNotificationUrl = (notif: typeof notification) => {
+      const { module, relatedId } = notif
+      switch (module) {
+        case 'work':
+          return `/work/detail/${relatedId}`
+        case 'article':
+          return `/article/detail/${relatedId}`
+        case 'user':
+          return `/system/userManagement`
+        case 'system':
+          return '/system/maintenance'
+        default:
+          return '/notifications'
+      }
+    }
+
+    return (
+      <div
+        className={`cursor-pointer rounded p-3 hover:bg-gray-50 ${!notification.isRead ? 'border-l-4 border-blue-400 bg-blue-50' : ''}`}
+        onClick={() => {
+          const url = getNotificationUrl(notification)
+          navigate(url)
+          if (!notification.isRead) {
+            markAsRead([notification.id])
+          }
+        }}
+      >
+        <div className="text-sm font-medium">{notification.title}</div>
+        <div className="mt-1 text-xs text-gray-600">{notification.content}</div>
+        <div className="mt-1 text-xs text-gray-400">
+          {new Date(notification.createTime).toLocaleString()}
+        </div>
+        {!notification.isRead && <div className="mt-2 h-2 w-2 rounded-full bg-blue-500"></div>}
+      </div>
+    )
   }
 
   // 用户下拉菜单项，hover触发，内容更丰富
@@ -63,9 +154,9 @@ export const Component: FC = () => {
             >
               {/* 用户名 */}
               <div className="mb-2 text-base font-semibold text-gray-800">{user.name}</div>
-              {/* 用户编号 */}
+              {/* 用户名 */}
               <div className="mb-2 flex items-center text-sm text-gray-600">
-                <span className="mr-2 text-gray-400">编号：</span>
+                <span className="mr-2 text-gray-400">用户名：</span>
                 <span className="font-mono">{user.code || '-'}</span>
               </div>
               {/* 角色名称 */}
@@ -73,7 +164,9 @@ export const Component: FC = () => {
                 <span className="mr-2 text-gray-400">角色：</span>
                 <span>
                   {(user.role?.name === 'admin' ? (
-                    <Tag color="red">超级管理员</Tag>
+                    <Tag color="red">系统管理员</Tag>
+                  ) : user.role?.name === 'boss' ? (
+                    <Tag color="blue">管理者</Tag>
                   ) : (
                     user.role?.name
                   )) || '-'}
@@ -92,12 +185,83 @@ export const Component: FC = () => {
           type: 'divider'
         },
         {
+          key: 'notifications',
+          label: (
+            <div className="min-w-[320px] max-w-[400px] rounded-lg bg-white">
+              <div className="border-b px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">通知消息</span>
+                  <div className="flex items-center space-x-2">
+                    <Badge count={unreadCount} />
+                    {unreadCount > 0 && (
+                      <Button
+                        type="link"
+                        size="small"
+                        onClick={e => {
+                          e.stopPropagation()
+                          markAllAsRead()
+                        }}
+                      >
+                        全部已读
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="max-h-64 overflow-y-auto">
+                {notifications.length > 0 ? (
+                  <>
+                    {notifications.slice(0, 3).map(notification => (
+                      <NotificationItem
+                        key={notification.id}
+                        notification={notification}
+                      />
+                    ))}
+                    {notifications.length > 3 && (
+                      <div className="p-3 text-center">
+                        <div className="text-sm text-gray-500">
+                          还有 {notifications.length - 3} 条未读通知
+                        </div>
+                        <Button
+                          type="link"
+                          size="small"
+                          onClick={() => navigate('/notifications')}
+                          className="mt-1"
+                        >
+                          查看全部
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="p-4 text-center text-sm text-gray-500">暂无新通知</div>
+                )}
+              </div>
+              <div className="border-t px-4 py-2 text-center">
+                <Button
+                  type="link"
+                  size="small"
+                  onClick={() => navigate('/notifications')}
+                >
+                  查看全部
+                </Button>
+              </div>
+            </div>
+          ),
+          disabled: true
+        },
+        {
+          type: 'divider'
+        },
+        {
           key: 'logout',
           label: <div className="px-2 py-1 text-red-600 hover:text-red-700">退出登录</div>,
           icon: <LogoutOutlined />,
           onClick: () => {
             const success = logout()
             if (success) {
+              // 清空通知状态
+              clearNotifications()
               message.success('退出成功')
             }
             navigate('/home')
@@ -219,8 +383,21 @@ export const Component: FC = () => {
       return false
     }
 
-    // 超管可以访问所有侧边栏菜单
-    if (user.role?.name === 'admin') return true
+    // 超管和老板可以访问所有侧边栏菜单
+    if (user.role?.name === 'admin' || user.role?.name === 'boss') return true
+
+    // 检查是否为hideInMenu的路由（无条件允许访问）
+    const allRoutes = getAllRoutes()
+    const currentRoute = allRoutes.find(route => {
+      // 处理动态路由参数
+      const routePathPattern = route.path.replace(/\/:[^/]+/g, '/[^/]+')
+      const regex = new RegExp(`^${routePathPattern}$`)
+      return regex.test(pathname)
+    })
+
+    if (currentRoute?.hideInMenu) {
+      return true
+    }
 
     // 其他角色按allowedRoutes检查侧边栏菜单权限
     const allowed = user.role?.allowedRoutes || []
@@ -255,14 +432,19 @@ export const Component: FC = () => {
               className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 transition-colors hover:bg-white/10"
               title={user?.name || '访客'}
             >
-              {/* 用户头像 */}
-              <Avatar
-                icon={<UserOutlined />}
-                className={`h-8 w-8 cursor-pointer text-sm hover:opacity-80 ${
-                  user ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-500 hover:bg-gray-600'
-                }`}
-                style={{ width: 32, height: 32 }}
-              />
+              {/* 用户头像带通知徽章 */}
+              <Badge
+                count={unreadCount}
+                size="small"
+              >
+                <Avatar
+                  icon={<UserOutlined />}
+                  className={`h-8 w-8 cursor-pointer text-sm hover:opacity-80 ${
+                    user ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-500 hover:bg-gray-600'
+                  }`}
+                  style={{ width: 32, height: 32 }}
+                />
+              </Badge>
               {/* 用户名显示在头像旁边 */}
               <span className="max-w-[120px] truncate text-sm font-medium text-white">
                 {user?.name || '访客'}

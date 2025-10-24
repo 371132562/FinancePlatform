@@ -6,11 +6,16 @@ const generatePassword = async (password) => {
   return await bcrypt.hash(password, saltRounds)
 }
 
-// 只保留超管角色，allowedRoutes为空数组
+// 角色定义：admin、boss
 const roles = [
   {
     name: 'admin',
-    description: '拥有所有权限，可以访问所有功能模块',
+    description: '系统管理员角色，拥有所有权限，可以访问所有功能模块',
+    allowedRoutes: [],
+  },
+  {
+    name: 'boss',
+    description: '公司管理者角色，拥有所有权限，可以访问所有功能模块',
     allowedRoutes: [],
   },
 ]
@@ -19,8 +24,8 @@ const roles = [
 const users = [
   {
     code: '88888888',
-    name: '超级管理员',
-    department: '超级管理员',
+    name: '系统管理员',
+    department: '系统管理员',
     email: '',
     phone: '',
     password: '88888888',

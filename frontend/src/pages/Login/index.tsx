@@ -16,7 +16,7 @@ const LoginPage: React.FC = () => {
   // 登录提交
   const onFinish = async (values: { code: string; password: string }) => {
     if (!values.code || !values.password) {
-      message.open({ type: 'warning', content: '请输入用户编号和密码' })
+      message.open({ type: 'warning', content: '请输入用户名和密码' })
       return
     }
     setSubmitting(true)
@@ -137,17 +137,17 @@ const LoginPage: React.FC = () => {
                   layout="vertical"
                   className="space-y-6"
                 >
-                  {/* 用户编号字段 */}
+                  {/* 用户名字段 */}
                   <div className="space-y-2">
                     <Form.Item
-                      label={<span className="text-sm font-medium text-gray-700">用户编号</span>}
+                      label={<span className="text-sm font-medium text-gray-700">用户名</span>}
                       name="code"
                       className="mb-0"
                     >
                       <div className="relative">
                         <Input
                           prefix={<UserOutlined />}
-                          placeholder="请输入用户编号"
+                          placeholder="请输入用户名"
                           autoFocus
                           className="h-12 w-full rounded-md border border-gray-300 pl-10 pr-3 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />

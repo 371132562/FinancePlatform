@@ -14,27 +14,51 @@ const prisma = new PrismaClient();
  */
 async function seedAuthData() {
   console.log('开始初始化认证数据...');
-  // 只保留超管角色
+  
+  // 创建/更新超管角色
   let adminRole = await prisma.role.findFirst({ where: { name: 'admin', delete: 0 } });
   if (adminRole) {
     adminRole = await prisma.role.update({
       where: { id: adminRole.id },
-        data: {
+      data: {
         description: '拥有所有权限，可以访问所有功能模块',
         allowedRoutes: [],
-        },
-      });
-    console.log('超管角色已存在，已更新');
-    } else {
+      },
+    });
+    console.log('系统管理员角色已存在，已更新');
+  } else {
     adminRole = await prisma.role.create({
-        data: {
+      data: {
         name: 'admin',
         description: '拥有所有权限，可以访问所有功能模块',
         allowedRoutes: [],
-        },
-      });
-    console.log('超管角色已创建');
+      },
+    });
+    console.log('系统管理员角色已创建');
   }
+
+  // 创建/更新公司管理者角色
+  let bossRole = await prisma.role.findFirst({ where: { name: 'boss', delete: 0 } });
+  if (bossRole) {
+    bossRole = await prisma.role.update({
+      where: { id: bossRole.id },
+      data: {
+        description: '公司管理者角色，拥有所有权限，可以访问所有功能模块',
+        allowedRoutes: [],
+      },
+    });
+    console.log('公司管理者角色已存在，已更新');
+  } else {
+    bossRole = await prisma.role.create({
+      data: {
+        name: 'boss',
+        description: '公司管理者角色，拥有所有权限，可以访问所有功能模块',
+        allowedRoutes: [],
+      },
+    });
+    console.log('公司管理者角色已创建');
+  }
+
 
   const encryptedUsers = await generateUsers();
   for (const user of encryptedUsers) {
@@ -51,7 +75,7 @@ async function seedAuthData() {
           roleId: adminRole.id,
         },
       });
-      console.log(`超管用户 "${user.name}" (${user.code}) 已更新`);
+      console.log(`系统管理员用户 "${user.name}" (${user.code}) 已更新`);
     } else {
       await prisma.user.create({
         data: {
@@ -64,12 +88,15 @@ async function seedAuthData() {
           roleId: adminRole.id,
         },
       });
-      console.log(`超管用户 "${user.name}" (${user.code}) 已创建`);
+      console.log(`系统管理员用户 "${user.name}" (${user.code}) 已创建`);
     }
   }
   console.log('认证数据初始化完成！');
+  console.log('\n角色权限说明：');
+  console.log('- admin: 拥有所有权限，可以访问所有功能模块');
+  console.log('- boss: 公司管理者角色，拥有所有权限，可以访问所有功能模块');
   console.log('\n初始用户账号：');
-  console.log('超管 账号/密码均为 8个8');
+  console.log('系统管理员 账号/密码均为 8个8');
 }
 
 /**

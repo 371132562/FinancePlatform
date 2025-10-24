@@ -1,4 +1,10 @@
-import { FileTextOutlined, HomeOutlined, SettingOutlined } from '@ant-design/icons'
+import {
+  BellOutlined,
+  FileTextOutlined,
+  HomeOutlined,
+  ProjectOutlined,
+  SettingOutlined
+} from '@ant-design/icons'
 import React, { lazy } from 'react'
 
 import { RouteItem } from '@/types'
@@ -12,6 +18,9 @@ const RoleManagement = lazy(() => import('@/pages/System/RoleManagement/RoleMana
 const SystemMaintenance = lazy(() => import('@/pages/System/SystemMaintenance'))
 const UserManagement = lazy(() => import('@/pages/System/UserManagement/UserManagement'))
 const SystemLogs = lazy(() => import('@/pages/System/SystemLogs'))
+const WorkTaskList = lazy(() => import('@/pages/WorkManagement/WorkTaskList.tsx'))
+const WorkTaskDetail = lazy(() => import('@/pages/WorkManagement/WorkTaskDetail.tsx'))
+const NotificationList = lazy(() => import('@/pages/Notification/NotificationList.tsx'))
 
 // 统一的路由配置数组，通过 menuPosition 区分顶部与侧边栏
 export const routes: RouteItem[] = [
@@ -34,7 +43,25 @@ export const routes: RouteItem[] = [
       }
     ]
   },
-  // 系统管理菜单（仅admin可见）
+  // 工作管理菜单
+  {
+    path: '/work',
+    title: '工作管理',
+    icon: <ProjectOutlined />,
+    menuPosition: 'side',
+    children: [
+      { path: '/work/list', title: '工作列表', component: WorkTaskList },
+      { path: '/work/detail/:id', title: '工作详情', component: WorkTaskDetail, hideInMenu: true }
+    ]
+  },
+  {
+    path: '/notifications',
+    title: '通知消息',
+    icon: <BellOutlined />,
+    component: NotificationList,
+    menuPosition: 'side'
+  },
+  // 系统管理菜单（仅admin和boss可见）
   {
     path: '/system',
     title: '系统管理',
@@ -72,8 +99,8 @@ export const getSideMenuRoutes = (userRole?: {
   name: string
   allowedRoutes: string[]
 }): RouteItem[] => {
-  // 超管：全部侧边菜单
-  if (userRole?.name === 'admin') {
+  // 超管和老板：全部侧边菜单
+  if (userRole?.name === 'admin' || userRole?.name === 'boss') {
     return routes.filter(r => r.menuPosition === 'side')
   }
 

@@ -162,7 +162,7 @@ export class SystemLogsService {
       throw new Error('用户ID不能为空');
     }
 
-    this.logger.log(`[操作] 列出用户日志文件 - 用户编号: ${userId}`);
+    this.logger.log(`[操作] 列出用户日志文件 - 用户名: ${userId}`);
 
     try {
       const userLogDir = join(this.baseLogDir, 'users', userId);
@@ -170,7 +170,7 @@ export class SystemLogsService {
       // 检查用户日志目录是否存在
       if (!existsSync(userLogDir)) {
         this.logger.log(
-          `[操作] 列出用户日志文件 - 用户编号: ${userId}, 目录不存在，返回空列表`,
+          `[操作] 列出用户日志文件 - 用户名: ${userId}, 目录不存在，返回空列表`,
         );
         return { files: [] };
       }
@@ -178,13 +178,13 @@ export class SystemLogsService {
       const files = await this.scanLogFiles(userLogDir);
 
       this.logger.log(
-        `[操作] 列出用户日志文件 - 用户编号: ${userId}, 共 ${files.length} 个文件`,
+        `[操作] 列出用户日志文件 - 用户名: ${userId}, 共 ${files.length} 个文件`,
       );
 
       return { files };
     } catch (error) {
       this.logger.error(
-        `[失败] 列出用户日志文件 - 用户编号: ${userId}, ${error instanceof Error ? error.message : '未知错误'}`,
+        `[失败] 列出用户日志文件 - 用户名: ${userId}, ${error instanceof Error ? error.message : '未知错误'}`,
         error instanceof Error ? error.stack : undefined,
       );
       throw error;
@@ -277,7 +277,7 @@ export class SystemLogsService {
     }
 
     this.logger.log(
-      `[操作] 读取用户日志 - 用户编号: ${userId}, 文件名: ${filename}`,
+      `[操作] 读取用户日志 - 用户名: ${userId}, 文件名: ${filename}`,
     );
 
     try {
@@ -299,13 +299,13 @@ export class SystemLogsService {
       const result = await this.readLogFile(filePath);
 
       this.logger.log(
-        `[操作] 读取用户日志 - 用户编号: ${userId}, 文件名: ${filename}, 共 ${result.length} 行日志`,
+        `[操作] 读取用户日志 - 用户名: ${userId}, 文件名: ${filename}, 共 ${result.length} 行日志`,
       );
 
       return result;
     } catch (error) {
       this.logger.error(
-        `[失败] 读取用户日志 - 用户编号: ${userId}, 文件名: ${filename}, ${error instanceof Error ? error.message : '未知错误'}`,
+        `[失败] 读取用户日志 - 用户名: ${userId}, 文件名: ${filename}, ${error instanceof Error ? error.message : '未知错误'}`,
         error instanceof Error ? error.stack : undefined,
       );
       return [];

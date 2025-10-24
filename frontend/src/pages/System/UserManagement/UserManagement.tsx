@@ -97,7 +97,7 @@ const UserManagement: React.FC = () => {
 
   const columns = [
     {
-      title: '用户编号',
+      title: '用户名',
       dataIndex: 'code',
       key: 'code'
     },
@@ -199,13 +199,13 @@ const UserManagement: React.FC = () => {
         >
           <Form.Item
             name="code"
-            label="用户编号"
-            rules={[{ required: true, message: '请输入用户编号' }]}
+            label="用户名"
+            rules={[{ required: true, message: '请输入用户名' }]}
           >
             <Input
               disabled={!!editUser}
               maxLength={20}
-              placeholder="请输入用户编号"
+              placeholder="请输入用户名"
             />
           </Form.Item>
           <Form.Item

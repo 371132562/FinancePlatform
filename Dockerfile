@@ -4,6 +4,11 @@
 # 使用 Node.js 22 作为基础镜像，用于所有构建操作
 FROM node:22-alpine AS builder
 
+# 设置时区为中国标准时间
+RUN apk add --no-cache tzdata
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 # 声明一个构建参数，用于接收 DATABASE_URL 的值
 ARG DATABASE_URL_BUILD
 
@@ -51,6 +56,12 @@ RUN pnpm build
 
 # --- 最终运行阶段 ---
 FROM node:22-alpine AS runner
+
+# 设置时区为中国标准时间
+RUN apk add --no-cache tzdata
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 WORKDIR /app
 
 # 从 builder 阶段复制必要的文件

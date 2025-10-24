@@ -21,8 +21,8 @@ import {
  * 用于用户选择下拉框的选项数据格式
  */
 type UserOption = {
-  label: string // 用户显示名称：姓名/编号 或 编号
-  value: string // 用户编号
+  label: string // 用户显示名称：姓名/用户名 或 用户名
+  value: string // 用户名
 }
 
 /**
@@ -157,7 +157,7 @@ export const useSystemLogsStore = create<SystemLogsState>((set, get) => ({
   // ==================== 用户日志方法实现 ====================
   /**
    * 获取用户日志文件列表
-   * @param payload 请求参数，包含用户编号
+   * @param payload 请求参数，包含用户名
    */
   async listUserFiles(payload) {
     set({ userFilesLoading: true })
@@ -176,7 +176,7 @@ export const useSystemLogsStore = create<SystemLogsState>((set, get) => ({
 
   /**
    * 读取用户日志内容
-   * @param payload 读取参数，包含用户编号、文件名、过滤条件等
+   * @param payload 读取参数，包含用户名、文件名、过滤条件等
    */
   async readUserLog(payload) {
     set({ contentLoading: true })
@@ -217,7 +217,7 @@ export const useSystemLogsStore = create<SystemLogsState>((set, get) => ({
   /**
    * 带防抖的用户文件列表刷新
    * 避免频繁调用API，提升用户体验
-   * @param userId 用户编号
+   * @param userId 用户名
    * @param force 是否强制刷新，忽略防抖限制
    */
   async refreshUserFilesWithDebounce(userId: string, force = false) {

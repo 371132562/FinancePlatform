@@ -6,16 +6,22 @@ import type {
   ArticleMetaItem,
   // 角色管理相关类型
   AssignRoleRoutes,
+  CommentItem,
   // 认证相关类型
   CreateArticle,
+  CreateComment,
   CreateRole,
   // 用户管理相关类型
   CreateUserEncrypted,
+  CreateWorkTask,
   DeleteArticle,
+  DeleteComment,
+  DeleteNotification,
   // 上传相关类型
   DeleteOrphans,
   DeleteRole,
   DeleteUser,
+  DeleteWorkTask,
   ExportFormat,
   // 系统日志相关类型
   LogFileLevel,
@@ -23,6 +29,11 @@ import type {
   LoginResponse,
   LogLineItem,
   LogUsersResDto,
+  MarkRead,
+  // 通知相关类型
+  NotificationItem,
+  NotificationList,
+  NotificationListResDto,
   OrphanImagesResponse,
   PaginatedResponse,
   ReadLog,
@@ -32,14 +43,22 @@ import type {
   RoleListResDto,
   SystemLogFilesResDto,
   TokenPayloadDto,
+  UnreadCountDto,
   UpdateArticle,
   UpdateRole,
   UpdateUser,
+  UpdateWorkTask,
   UploadResponse,
   UserItem,
   UserListResDto,
   UserLogFilesReq,
-  UserProfileDto
+  UserProfileDto,
+  WorkTaskDetail,
+  WorkTaskDetailResDto,
+  // 工作项相关类型
+  WorkTaskItem,
+  WorkTaskList,
+  WorkTaskListResDto
 } from 'template-backend/types/dto'
 
 /**
@@ -113,3 +132,28 @@ export type {
 
 // 上传相关类型
 export type { DeleteOrphans, OrphanImagesResponse, UploadResponse }
+
+// 工作项相关类型
+export type {
+  CommentItem,
+  CreateComment,
+  CreateWorkTask,
+  DeleteComment,
+  DeleteWorkTask,
+  UpdateWorkTask,
+  WorkTaskDetail,
+  WorkTaskDetailResDto,
+  WorkTaskItem,
+  WorkTaskList,
+  WorkTaskListResDto
+}
+
+// 通知相关类型
+export type {
+  DeleteNotification,
+  MarkRead,
+  NotificationItem,
+  NotificationList,
+  NotificationListResDto,
+  UnreadCountDto
+}

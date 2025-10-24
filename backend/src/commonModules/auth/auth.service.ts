@@ -52,7 +52,7 @@ export class AuthService {
    */
   async loginWithHash(dto: LoginWithHashDto): Promise<LoginResponseDto> {
     const { code } = dto;
-    this.logger.log(`[操作] 用户登录 - 用户编号: ${code}`);
+    this.logger.log(`[操作] 用户登录 - 用户名: ${code}`);
     try {
       const user = await this.prisma.user.findFirst({
         where: { code, delete: 0 },
@@ -70,7 +70,7 @@ export class AuthService {
         },
       });
       if (!user) {
-        this.logger.warn(`[验证失败] 用户登录 - 用户编号 ${code} 不存在`);
+        this.logger.warn(`[验证失败] 用户登录 - 用户名 ${code} 不存在`);
         throw new BusinessException(ErrorCode.USER_NOT_FOUND, '用户不存在');
       }
 
@@ -82,7 +82,7 @@ export class AuthService {
       // 使用bcrypt.compare验证密码
       const isValid = await bcrypt.compare(password, user.password);
       if (!isValid) {
-        this.logger.warn(`[验证失败] 用户登录 - 用户编号 ${code} 密码错误`);
+        this.logger.warn(`[验证失败] 用户登录 - 用户名 ${code} 密码错误`);
         throw new BusinessException(ErrorCode.PASSWORD_INCORRECT, '密码错误');
       }
 
@@ -97,7 +97,7 @@ export class AuthService {
       };
       const token = this.jwtService.sign(payload);
       this.logger.log(
-        `[操作] 用户登录成功 - 用户编号: ${code}, 姓名: ${user.name}`,
+        `[操作] 用户登录成功 - 用户名: ${code}, 姓名: ${user.name}`,
       );
       return {
         token,

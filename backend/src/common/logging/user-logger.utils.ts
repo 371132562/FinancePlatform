@@ -6,8 +6,8 @@ import { createLogger, format, Logger, transports } from 'winston';
 
 /**
  * 用户级日志工具
- * 用途：为每个用户编号创建/复用独立的 winston 日志器，将该用户的日志写入独立目录并按日滚动
- * 上游：`WinstonLoggerService` 在检测到上下文中存在用户编号时调用
+ * 用途：为每个用户名创建/复用独立的 winston 日志器，将该用户的日志写入独立目录并按日滚动
+ * 上游：`WinstonLoggerService` 在检测到上下文中存在用户名时调用
  * 下游：写入到磁盘目录 LOG_DIR/users/<userId>/application-*.log
  */
 

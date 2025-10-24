@@ -8,11 +8,11 @@ import { logger as winstonLogger } from '../logging/winston-core.utils';
  * 应用级日志服务（WinstonLoggerService）
  * 用途：实现 Nest 的 LoggerService 接口，统一入口；自动拼接用户信息前缀
  * 上游：在 bootstrap 中被注入为全局 logger；各 Service/Interceptor 调用 this.logger.*()
- * 下游：委托给 winston 实例写入控制台/文件；前缀从 RequestContext 读取 [用户编号] [用户名称]
+ * 下游：委托给 winston 实例写入控制台/文件；前缀从 RequestContext 读取 [用户名] [用户名称]
  */
 @Injectable()
 export class WinstonLoggerService implements LoggerService {
-  // 统一构造日志前缀；按需求输出 [用户编号] [用户名称]
+  // 统一构造日志前缀；按需求输出 [用户名] [用户名称]
   private withPrefix(message: unknown): {
     prefix: string;
     userCode: string;

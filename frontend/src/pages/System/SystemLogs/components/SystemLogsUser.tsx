@@ -231,7 +231,7 @@ const SystemLogsUser: React.FC = () => {
                   <p>
                     <strong>操作步骤：</strong>
                   </p>
-                  <p>1. 选择用户编号</p>
+                  <p>1. 选择用户名</p>
                   <p>2. 选择日志文件</p>
                   <p>3. 输入关键词（可选）</p>
                   <p>4. 选择时间范围（可选）</p>

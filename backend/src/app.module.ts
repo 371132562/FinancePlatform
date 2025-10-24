@@ -9,6 +9,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { ArticleModule } from './businessModules/article/article.module';
 import { RoleModule } from './businessModules/role/role.module';
 import { UserModule } from './businessModules/user/user.module';
+import { WorkTaskModule } from './businessModules/workTask/workTask.module';
 import { AllExceptionsFilter } from './common/exceptions/allExceptionsFilter';
 import { TransformInterceptor } from './common/interceptors/response.interceptor';
 import { UserContextInterceptor } from './common/interceptors/user-context.interceptor';
@@ -16,6 +17,7 @@ import { RequestContextMiddleware } from './common/middlewares/request-context.m
 import { LoggerModule } from './common/services/logger.module';
 import { AuthModule } from './commonModules/auth/auth.module';
 import { JwtAuthGuard } from './commonModules/auth/jwt-auth.guard';
+import { NotificationModule } from './commonModules/notification/notification.module';
 import { SystemLogsModule } from './commonModules/systemLogs/systemLogs.module';
 import { UploadModule } from './commonModules/upload/upload.module';
 
@@ -49,6 +51,8 @@ import { UploadModule } from './commonModules/upload/upload.module';
     RoleModule,
     UserModule,
     ArticleModule, // 文章管理模块
+    WorkTaskModule, // 工作项管理模块
+    NotificationModule, // 通知模块
     SystemLogsModule, // 系统日志模块
   ],
   controllers: [],
