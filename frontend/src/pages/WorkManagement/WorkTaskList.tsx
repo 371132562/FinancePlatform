@@ -145,6 +145,7 @@ const WorkTaskList: FC = () => {
             placeholder="搜索工作标题或描述"
             onSearch={handleSearch}
             style={{ width: 200 }}
+            allowClear
           />
           <Select
             placeholder="选择状态"
