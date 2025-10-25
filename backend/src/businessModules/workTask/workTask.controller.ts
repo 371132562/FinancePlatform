@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards, UsePipes } from '@nestjs/common';
 
 import { CurrentUser } from '../../common/auth/user.decorator';
 import { JwtAuthGuard } from '../../commonModules/auth/jwt-auth.guard';
@@ -11,6 +11,11 @@ import {
   WorkTaskDetailQueryDto,
   WorkTaskListDto,
 } from './workTask.dto';
+import {
+  CommentExistsPipe,
+  TaskDetailPermissionPipe,
+  TaskExistsPipe,
+} from './workTask.pipes';
 import { WorkTaskService } from './workTask.service';
 
 // 定义用户类型
@@ -43,6 +48,7 @@ export class WorkTaskController {
    * 获取工作项详情
    */
   @Post('detail')
+  @UsePipes(TaskDetailPermissionPipe)
   async getTaskDetail(
     @CurrentUser() user: UserPayload,
     @Body() dto: WorkTaskDetailQueryDto,
@@ -69,6 +75,7 @@ export class WorkTaskController {
    * 更新工作项
    */
   @Post('update')
+  @UsePipes(TaskExistsPipe)
   async updateTask(
     @CurrentUser() user: UserPayload,
     @Body() dto: UpdateWorkTaskDto,
@@ -84,6 +91,7 @@ export class WorkTaskController {
    * 删除工作项
    */
   @Post('delete')
+  @UsePipes(TaskExistsPipe)
   async deleteTask(
     @CurrentUser() user: UserPayload,
     @Body() dto: DeleteWorkTaskDto,
@@ -96,9 +104,10 @@ export class WorkTaskController {
   }
 
   /**
-   * 添加评论
+   * 添加回复
    */
   @Post('comment/create')
+  @UsePipes(TaskExistsPipe)
   async createComment(
     @CurrentUser() user: UserPayload,
     @Body() dto: CreateCommentDto,
@@ -107,9 +116,10 @@ export class WorkTaskController {
   }
 
   /**
-   * 删除评论
+   * 删除回复
    */
   @Post('comment/delete')
+  @UsePipes(CommentExistsPipe)
   async deleteComment(
     @CurrentUser() user: UserPayload,
     @Body() dto: DeleteCommentDto,

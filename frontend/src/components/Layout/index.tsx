@@ -9,8 +9,7 @@ import {
   Layout,
   Menu,
   MenuProps,
-  message,
-  Tag
+  message
 } from 'antd'
 import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
@@ -18,6 +17,7 @@ import { Link, useLocation, useNavigate, useOutlet } from 'react-router'
 
 import ErrorPage from '@/components/Error'
 import Forbidden from '@/components/Forbidden'
+import { isFullPermissionRole } from '@/config/roleNames'
 import {
   getAllRoutes,
   getBreadcrumbItems,
@@ -50,9 +50,8 @@ export const Component: FC = () => {
   // 通知相关状态
   const {
     unreadCount,
-    notifications,
-    fetchUnreadCount,
-    fetchNotifications,
+    unreadNotifications,
+    fetchUnreadNotifications,
     markAsRead,
     markAllAsRead,
     clearNotifications
@@ -66,24 +65,19 @@ export const Component: FC = () => {
     }
   }, [token, fetchProfile])
 
-  // 获取未读通知数量（定时轮询）
+  // 获取未读通知（定时轮询）
   useEffect(() => {
     if (token) {
-      fetchUnreadCount()
+      // 初始加载
+      fetchUnreadNotifications()
+
       // 每30秒轮询一次
       const interval = setInterval(() => {
-        fetchUnreadCount()
+        fetchUnreadNotifications()
       }, 30000)
       return () => clearInterval(interval)
     }
-  }, [token, fetchUnreadCount])
-
-  // 获取通知列表（只获取未读通知）
-  useEffect(() => {
-    if (token) {
-      fetchNotifications({ pageSize: 3, isRead: 0 })
-    }
-  }, [token, fetchNotifications])
+  }, [token, fetchUnreadNotifications])
 
   const handleMenuClick: MenuProps['onClick'] = e => {
     navigate(e.key)
@@ -124,17 +118,21 @@ export const Component: FC = () => {
     return (
       <div
         className={`cursor-pointer rounded p-3 hover:bg-gray-50 ${!notification.isRead ? 'border-l-4 border-blue-400 bg-blue-50' : ''}`}
-        onClick={() => {
+        onClick={async () => {
           const url = getNotificationUrl(notification)
           navigate(url)
           if (!notification.isRead) {
-            markAsRead([notification.id])
+            const success = await markAsRead([notification.id])
+            if (success) {
+              // 重新获取未读通知列表以更新右上角显示
+              fetchUnreadNotifications()
+            }
           }
         }}
       >
-        <div className="text-sm font-medium">{notification.title}</div>
-        <div className="mt-1 text-xs text-gray-600">{notification.content}</div>
-        <div className="mt-1 text-xs text-gray-400">
+        <div className="font-medium">{notification.title}</div>
+        <div className="mt-1 text-gray-600">{notification.content}</div>
+        <div className="mt-1 text-gray-400">
           {new Date(notification.createTime).toLocaleString()}
         </div>
         {!notification.isRead && <div className="mt-2 h-2 w-2 rounded-full bg-blue-500"></div>}
@@ -162,15 +160,7 @@ export const Component: FC = () => {
               {/* 角色名称 */}
               <div className="mb-2 flex items-center text-sm text-gray-600">
                 <span className="mr-2 text-gray-400">角色：</span>
-                <span>
-                  {(user.role?.name === 'admin' ? (
-                    <Tag color="red">系统管理员</Tag>
-                  ) : user.role?.name === 'boss' ? (
-                    <Tag color="blue">管理者</Tag>
-                  ) : (
-                    user.role?.name
-                  )) || '-'}
-                </span>
+                <span>{user.role?.name || '-'}</span>
               </div>
               {/* 所属部门 */}
               <div className="flex items-center text-sm text-gray-600">
@@ -209,18 +199,18 @@ export const Component: FC = () => {
                 </div>
               </div>
               <div className="max-h-64 overflow-y-auto">
-                {notifications.length > 0 ? (
+                {unreadNotifications.length > 0 ? (
                   <>
-                    {notifications.slice(0, 3).map(notification => (
+                    {unreadNotifications.slice(0, 3).map(notification => (
                       <NotificationItem
                         key={notification.id}
                         notification={notification}
                       />
                     ))}
-                    {notifications.length > 3 && (
+                    {unreadNotifications.length > 3 && (
                       <div className="p-3 text-center">
-                        <div className="text-sm text-gray-500">
-                          还有 {notifications.length - 3} 条未读通知
+                        <div className="text-gray-500">
+                          还有 {unreadNotifications.length - 3} 条未读通知
                         </div>
                         <Button
                           type="link"
@@ -384,7 +374,7 @@ export const Component: FC = () => {
     }
 
     // 超管和老板可以访问所有侧边栏菜单
-    if (user.role?.name === 'admin' || user.role?.name === 'boss') return true
+    if (isFullPermissionRole(user.role?.name || '')) return true
 
     // 检查是否为hideInMenu的路由（无条件允许访问）
     const allRoutes = getAllRoutes()

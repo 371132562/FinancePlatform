@@ -7,6 +7,12 @@
 const { PrismaClient } = require('@prisma/client');
 const { generateUsers } = require('./initialData/authData');
 
+// 系统内置角色名称常量
+const SystemRoleNames = {
+  ADMIN: '系统管理员',
+  BOSS: '公司管理者'
+}
+
 const prisma = new PrismaClient();
 
 /**
@@ -16,7 +22,7 @@ async function seedAuthData() {
   console.log('开始初始化认证数据...');
   
   // 创建/更新超管角色
-  let adminRole = await prisma.role.findFirst({ where: { name: 'admin', delete: 0 } });
+  let adminRole = await prisma.role.findFirst({ where: { name: SystemRoleNames.ADMIN, delete: 0 } });
   if (adminRole) {
     adminRole = await prisma.role.update({
       where: { id: adminRole.id },
@@ -29,7 +35,7 @@ async function seedAuthData() {
   } else {
     adminRole = await prisma.role.create({
       data: {
-        name: 'admin',
+        name: SystemRoleNames.ADMIN,
         description: '拥有所有权限，可以访问所有功能模块',
         allowedRoutes: [],
       },
@@ -38,7 +44,7 @@ async function seedAuthData() {
   }
 
   // 创建/更新公司管理者角色
-  let bossRole = await prisma.role.findFirst({ where: { name: 'boss', delete: 0 } });
+  let bossRole = await prisma.role.findFirst({ where: { name: SystemRoleNames.BOSS, delete: 0 } });
   if (bossRole) {
     bossRole = await prisma.role.update({
       where: { id: bossRole.id },
@@ -51,7 +57,7 @@ async function seedAuthData() {
   } else {
     bossRole = await prisma.role.create({
       data: {
-        name: 'boss',
+        name: SystemRoleNames.BOSS,
         description: '公司管理者角色，拥有所有权限，可以访问所有功能模块',
         allowedRoutes: [],
       },
@@ -93,8 +99,8 @@ async function seedAuthData() {
   }
   console.log('认证数据初始化完成！');
   console.log('\n角色权限说明：');
-  console.log('- admin: 拥有所有权限，可以访问所有功能模块');
-  console.log('- boss: 公司管理者角色，拥有所有权限，可以访问所有功能模块');
+  console.log('- 系统管理员: 拥有所有权限，可以访问所有功能模块');
+  console.log('- 公司管理者: 公司管理者角色，拥有所有权限，可以访问所有功能模块');
   console.log('\n初始用户账号：');
   console.log('系统管理员 账号/密码均为 8个8');
 }

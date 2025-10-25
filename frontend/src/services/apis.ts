@@ -45,12 +45,11 @@ export const workTaskDetailApiUrl = '/workTask/detail' // 获取工作项详情
 export const workTaskCreateApiUrl = '/workTask/create' // 创建工作项
 export const workTaskUpdateApiUrl = '/workTask/update' // 更新工作项
 export const workTaskDeleteApiUrl = '/workTask/delete' // 删除工作项
-export const workTaskCommentCreateApiUrl = '/workTask/comment/create' // 创建评论
-export const workTaskCommentDeleteApiUrl = '/workTask/comment/delete' // 删除评论
+export const workTaskCommentCreateApiUrl = '/workTask/comment/create' // 创建回复
+export const workTaskCommentDeleteApiUrl = '/workTask/comment/delete' // 删除回复
 
 // 通知相关 API
 export const notificationListApiUrl = '/notification/list' // 获取通知列表
-export const notificationUnreadCountApiUrl = '/notification/unreadCount' // 获取未读通知数量
 export const notificationMarkReadApiUrl = '/notification/markRead' // 标记通知已读
 export const notificationMarkAllReadApiUrl = '/notification/markAllRead' // 标记所有通知已读
 export const notificationDeleteApiUrl = '/notification/delete' // 删除通知

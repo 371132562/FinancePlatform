@@ -17,7 +17,7 @@ model User {
   id         String   @id @default(uuid()) // 主键ID（UUID）
   code       String   @unique // 用户名（唯一）
   name       String // 用户姓名
-  department String // 所属部门
+  department String? // 所属部门（可选）
   email      String? // 邮箱地址（可选）
   phone      String? // 电话号码（可选）
   password   String // 密码（加密存储）

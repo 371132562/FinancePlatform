@@ -3,6 +3,7 @@ import type { Role } from '@prisma/client';
 
 import { PrismaService } from '../../../prisma/prisma.service';
 import { ErrorCode } from '../../../types/response';
+import { SystemRoleNames } from '../../common/config/roleNames';
 import { BusinessException } from '../../common/exceptions/businessException';
 
 /**
@@ -20,10 +21,10 @@ export class RoleNameExistsValidationPipe implements PipeTransform {
     }
 
     // 系统保留角色名检查
-    if (value === 'admin') {
+    if (value === (SystemRoleNames.ADMIN as string)) {
       throw new BusinessException(
         ErrorCode.ROLE_NAME_EXIST,
-        'admin为系统保留角色名',
+        '系统管理员为系统保留角色名',
       );
     }
 
@@ -56,10 +57,10 @@ export class RoleNameUpdateValidationPipe implements PipeTransform {
     }
 
     // 系统保留角色名检查
-    if (name === 'admin') {
+    if (name === (SystemRoleNames.ADMIN as string)) {
       throw new BusinessException(
         ErrorCode.ROLE_NAME_EXIST,
-        'admin为系统保留角色名',
+        '系统管理员为系统保留角色名',
       );
     }
 

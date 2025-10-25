@@ -3,6 +3,7 @@ import { Avatar, Button, Input, message, Select, Tag } from 'antd'
 import { FC, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 
+import { SystemRoleNames } from '@/config/roleNames'
 import { useAuthStore } from '@/stores/authStore'
 import { useWorkTaskStore } from '@/stores/workTaskStore'
 
@@ -45,24 +46,24 @@ const WorkTaskDetail: FC = () => {
     }
   }
 
-  // 添加评论
+  // 添加回复
   const handleAddComment = async () => {
     if (!newComment.trim() || !id) return
 
     setIsSubmittingComment(true)
     const success = await addComment(id, newComment.trim())
     if (success) {
-      message.success('评论添加成功')
+      message.success('回复添加成功')
       setNewComment('')
     }
     setIsSubmittingComment(false)
   }
 
-  // 删除评论
+  // 删除回复
   const handleDeleteComment = async (commentId: string) => {
     const success = await deleteComment(commentId)
     if (success) {
-      message.success('评论删除成功')
+      message.success('回复删除成功')
     }
   }
 
@@ -127,7 +128,7 @@ const WorkTaskDetail: FC = () => {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">关联人员</label>
+            <label className="mb-2 block text-sm font-medium">执行人员</label>
             <div className="flex flex-wrap gap-2">
               {currentTask.assignedUsers.map(user => (
                 <div
@@ -147,15 +148,16 @@ const WorkTaskDetail: FC = () => {
         </div>
       </div>
 
-      {/* 评论区域 */}
+      {/* 回复区域 */}
       <div className="rounded-lg border bg-white p-6">
         <h3 className="mb-4 text-lg font-semibold">工作讨论</h3>
         <div className="space-y-4">
-          {/* 评论列表 */}
+          {/* 回复列表 */}
           <div className="max-h-96 space-y-3 overflow-y-auto">
             {currentTask.comments.map(comment => {
               const isCommentFromBoss =
-                comment.user.role?.name === 'boss' || comment.user.role?.name === 'admin'
+                comment.user.role?.name === SystemRoleNames.BOSS ||
+                comment.user.role?.name === SystemRoleNames.ADMIN
               const isCurrentUserComment = comment.user.id === user?.id
 
               return (
@@ -177,8 +179,8 @@ const WorkTaskDetail: FC = () => {
                         {isCommentFromBoss ? '老板' : '员工'}
                       </Tag>
                       {(isCurrentUserComment ||
-                        user?.role?.name === 'boss' ||
-                        user?.role?.name === 'admin') && (
+                        user?.role?.name === SystemRoleNames.BOSS ||
+                        user?.role?.name === SystemRoleNames.ADMIN) && (
                         <Button
                           type="link"
                           size="small"
@@ -199,13 +201,13 @@ const WorkTaskDetail: FC = () => {
             })}
           </div>
 
-          {/* 添加评论 */}
+          {/* 添加回复 */}
           <div className="border-t pt-4">
             <div className="space-y-2">
               <TextArea
                 value={newComment}
                 onChange={e => setNewComment(e.target.value)}
-                placeholder="添加评论..."
+                placeholder="添加回复..."
                 rows={3}
               />
               <div className="flex justify-end">

@@ -1,6 +1,7 @@
-import { DeleteOutlined, EyeOutlined } from '@ant-design/icons'
+import { DeleteOutlined } from '@ant-design/icons'
 import { Button, Input, message, Popconfirm, Space, Table, Tag } from 'antd'
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router'
 
 import { useAuthStore } from '@/stores/authStore'
 import { useNotificationStore } from '@/stores/notificationStore'
@@ -12,6 +13,7 @@ const { Search } = Input
  */
 const NotificationList = () => {
   const { user } = useAuthStore()
+  const navigate = useNavigate()
   const {
     notifications,
     loading,
@@ -63,16 +65,60 @@ const NotificationList = () => {
     }
   }
 
+  // 根据模块和类型生成跳转URL
+  const getNotificationUrl = (notification: { module: string; relatedId?: string | null }) => {
+    const { module, relatedId } = notification
+    switch (module) {
+      case 'work':
+        return `/work/detail/${relatedId}`
+      case 'article':
+        return `/article/detail/${relatedId}`
+      case 'user':
+        return `/system/userManagement`
+      case 'system':
+        return '/system/maintenance'
+      default:
+        return '/notifications'
+    }
+  }
+
+  // 处理标题点击跳转
+  const handleTitleClick = async (notification: {
+    id: string
+    isRead: number
+    module: string
+    relatedId?: string | null
+  }) => {
+    const url = getNotificationUrl(notification)
+    navigate(url)
+
+    // 如果是未读通知，标记为已读
+    if (!notification.isRead) {
+      const success = await markAsRead([notification.id])
+      if (success) {
+        message.success('已标记为已读')
+      }
+    }
+  }
+
   // 表格列定义
   const columns = [
     {
-      title: '标题',
+      title: '标题 (点击跳转)',
       dataIndex: 'title',
       key: 'title',
       width: 200,
-      render: (title: string, record: { isRead: number; id: string }) => (
+      render: (
+        title: string,
+        record: { isRead: number; id: string; module: string; relatedId?: string | null }
+      ) => (
         <div className="flex items-center gap-2">
-          <span className="font-medium">{title}</span>
+          <span
+            className="cursor-pointer font-medium text-blue-600 hover:text-blue-800 hover:underline"
+            onClick={() => handleTitleClick(record)}
+          >
+            {title}
+          </span>
           {!record.isRead && <Tag color="blue">未读</Tag>}
         </div>
       )
@@ -92,6 +138,17 @@ const NotificationList = () => {
       )
     },
     {
+      title: '状态',
+      dataIndex: 'isRead',
+      key: 'isRead',
+      width: 80,
+      render: (isRead: number) => (
+        <span className={isRead ? 'text-gray-600' : 'text-red-500'}>
+          {isRead ? '已读' : '未读'}
+        </span>
+      )
+    },
+    {
       title: '类型',
       dataIndex: 'type',
       key: 'type',
@@ -101,7 +158,7 @@ const NotificationList = () => {
           assigned: { color: 'blue', text: '任务分配' },
           updated: { color: 'green', text: '任务更新' },
           completed: { color: 'success', text: '任务完成' },
-          commented: { color: 'orange', text: '评论' }
+          commented: { color: 'orange', text: '回复' }
         }
         const typeInfo = typeMap[type] || { color: 'default', text: type }
         return <Tag color={typeInfo.color}>{typeInfo.text}</Tag>
@@ -124,7 +181,7 @@ const NotificationList = () => {
             <Button
               type="link"
               size="small"
-              icon={<EyeOutlined />}
+              pa
               onClick={() => handleMarkAsRead(record.id)}
             >
               标记已读

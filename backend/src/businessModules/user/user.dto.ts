@@ -12,7 +12,7 @@ export type UserItem = {
   id: string;
   code: string;
   name: string;
-  department: string;
+  department: string | null;
   email: string | null;
   phone: string | null;
   role?: { name?: string; allowedRoutes?: string[] } | null;
@@ -30,9 +30,9 @@ export class CreateUserDto {
   @IsNotEmpty({ message: '用户姓名不能为空' })
   name: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: '部门不能为空' })
-  department: string;
+  department?: string;
 
   @IsOptional()
   @IsEmail({}, { message: '邮箱格式不正确' })
@@ -149,9 +149,9 @@ export class CreateUserEncryptedDto {
   @IsNotEmpty({ message: '用户姓名不能为空' })
   name: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: '部门不能为空' })
-  department: string;
+  department?: string;
 
   @IsOptional()
   @IsEmail({}, { message: '邮箱格式不正确' })

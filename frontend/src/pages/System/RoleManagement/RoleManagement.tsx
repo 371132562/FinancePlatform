@@ -10,10 +10,11 @@ import {
   Select,
   Space,
   Spin,
-  Table,
-  Tag
+  Table
 } from 'antd'
 import React, { useEffect, useState } from 'react'
+
+import { SystemRoleNames } from '@/config/roleNames'
 
 import { getMenuOptionsForRoleEdit } from '../../../router/routesConfig'
 import { useRoleStore } from '../../../stores/roleStore'
@@ -101,7 +102,7 @@ const RoleManagement: React.FC = () => {
       title: '角色名称',
       dataIndex: 'name',
       key: 'name',
-      render: (v: string) => (v === 'admin' ? <Tag color="red">超级管理员</Tag> : v)
+      render: (v: string) => v
     },
     { title: '描述', dataIndex: 'description', key: 'description' },
     { title: '用户数', dataIndex: 'userCount', key: 'userCount' },
@@ -114,13 +115,13 @@ const RoleManagement: React.FC = () => {
             color="primary"
             variant="outlined"
             onClick={() => openAssignModal(record)}
-            disabled={record.name === 'admin' || record.name === 'boss'}
+            disabled={record.name === SystemRoleNames.ADMIN || record.name === SystemRoleNames.BOSS}
           >
             分配权限
           </Button>
           <Button
             onClick={() => openModal(record)}
-            disabled={record.name === 'admin' || record.name === 'boss'}
+            disabled={record.name === SystemRoleNames.ADMIN || record.name === SystemRoleNames.BOSS}
           >
             编辑
           </Button>
@@ -141,13 +142,15 @@ const RoleManagement: React.FC = () => {
                 message.success('角色删除成功')
               }
             }}
-            disabled={record.name === 'admin' || record.name === 'boss'}
+            disabled={record.name === SystemRoleNames.ADMIN || record.name === SystemRoleNames.BOSS}
             okText="确定"
             cancelText="取消"
           >
             <Button
               danger
-              disabled={record.name === 'admin' || record.name === 'boss'}
+              disabled={
+                record.name === SystemRoleNames.ADMIN || record.name === SystemRoleNames.BOSS
+              }
             >
               删除
             </Button>
@@ -192,11 +195,13 @@ const RoleManagement: React.FC = () => {
         >
           <Form.Item
             name="name"
-            label="角色名称（admin和boss为系统保留角色名，不可新建/编辑）"
+            label="角色名称（系统管理员和公司管理者为系统保留角色名，不可新建/编辑）"
             rules={[{ required: true, message: '请输入角色名称' }]}
           >
             <Input
-              disabled={editRole?.name === 'admin' || editRole?.name === 'boss'}
+              disabled={
+                editRole?.name === SystemRoleNames.ADMIN || editRole?.name === SystemRoleNames.BOSS
+              }
               maxLength={20}
               placeholder="请输入角色名称"
               showCount

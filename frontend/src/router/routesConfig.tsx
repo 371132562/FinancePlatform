@@ -7,6 +7,7 @@ import {
 } from '@ant-design/icons'
 import React, { lazy } from 'react'
 
+import { isFullPermissionRole } from '@/config/roleNames'
 import { RouteItem } from '@/types'
 
 // 使用React.lazy实现懒加载（默认导出）
@@ -100,7 +101,7 @@ export const getSideMenuRoutes = (userRole?: {
   allowedRoutes: string[]
 }): RouteItem[] => {
   // 超管和老板：全部侧边菜单
-  if (userRole?.name === 'admin' || userRole?.name === 'boss') {
+  if (isFullPermissionRole(userRole?.name || '')) {
     return routes.filter(r => r.menuPosition === 'side')
   }
 

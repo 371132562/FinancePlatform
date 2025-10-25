@@ -109,7 +109,7 @@ export const useWorkTaskStore = create<WorkTaskStore>(set => ({
     }
   },
 
-  // 添加评论
+  // 添加回复
   async addComment(taskId, content) {
     set({ loading: true, error: null })
     try {
@@ -117,13 +117,13 @@ export const useWorkTaskStore = create<WorkTaskStore>(set => ({
       set({ loading: false, error: null })
       return true
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : '添加评论失败'
+      const errorMsg = err instanceof Error ? err.message : '添加回复失败'
       set({ loading: false, error: errorMsg })
       return false
     }
   },
 
-  // 删除评论
+  // 删除回复
   async deleteComment(commentId) {
     set({ loading: true, error: null })
     try {
@@ -131,7 +131,7 @@ export const useWorkTaskStore = create<WorkTaskStore>(set => ({
       set({ loading: false, error: null })
       return true
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : '删除评论失败'
+      const errorMsg = err instanceof Error ? err.message : '删除回复失败'
       set({ loading: false, error: errorMsg })
       return false
     }

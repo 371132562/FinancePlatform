@@ -1,8 +1,9 @@
 import { PlusOutlined } from '@ant-design/icons'
-import { Button, Input, message, Modal, Select, Spin, Table, Tag } from 'antd'
+import { Button, Form, Input, message, Modal, Select, Spin, Table, Tag } from 'antd'
 import { FC, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 
+import { SystemRoleNames } from '@/config/roleNames'
 import { useUserStore } from '@/stores/userStore'
 import { useWorkTaskStore } from '@/stores/workTaskStore'
 import type { WorkTaskItem, WorkTaskList } from '@/types'
@@ -43,11 +44,7 @@ const WorkTaskList: FC = () => {
   })
 
   const [createModalVisible, setCreateModalVisible] = useState(false)
-  const [createForm, setCreateForm] = useState({
-    title: '',
-    description: '',
-    assignedUserIds: [] as string[]
-  })
+  const [form] = Form.useForm()
 
   useEffect(() => {
     fetchTaskList(searchParams)
@@ -65,21 +62,17 @@ const WorkTaskList: FC = () => {
   }
 
   const handleCreateTask = async () => {
-    if (
-      !createForm.title.trim() ||
-      !createForm.description.trim() ||
-      createForm.assignedUserIds.length === 0
-    ) {
-      message.error('请填写完整信息')
-      return
-    }
-
-    const success = await createTask(createForm)
-    if (success) {
-      message.success('工作项创建成功')
-      setCreateModalVisible(false)
-      setCreateForm({ title: '', description: '', assignedUserIds: [] })
-      fetchTaskList(searchParams)
+    try {
+      const values = await form.validateFields()
+      const success = await createTask(values)
+      if (success) {
+        message.success('工作项创建成功')
+        setCreateModalVisible(false)
+        form.resetFields()
+        fetchTaskList(searchParams)
+      }
+    } catch (error) {
+      console.error('表单验证失败:', error)
     }
   }
 
@@ -114,7 +107,7 @@ const WorkTaskList: FC = () => {
       render: (creator: WorkTaskItem['creator']) => creator?.name || '-'
     },
     {
-      title: '关联人员',
+      title: '执行人员',
       dataIndex: 'assignedUsers',
       key: 'assignedUsers',
       width: 200,
@@ -196,11 +189,17 @@ const WorkTaskList: FC = () => {
       <Modal
         title="新建工作项"
         open={createModalVisible}
-        onCancel={() => setCreateModalVisible(false)}
+        onCancel={() => {
+          setCreateModalVisible(false)
+          form.resetFields()
+        }}
         footer={[
           <Button
             key="cancel"
-            onClick={() => setCreateModalVisible(false)}
+            onClick={() => {
+              setCreateModalVisible(false)
+              form.resetFields()
+            }}
           >
             取消
           </Button>,
@@ -214,48 +213,61 @@ const WorkTaskList: FC = () => {
         ]}
         width={600}
       >
-        <div className="space-y-4">
-          <div>
-            <label className="mb-2 block text-sm font-medium">工作标题 *</label>
+        <Form
+          form={form}
+          layout="vertical"
+          initialValues={{ title: '', description: '', assignedUserIds: [] }}
+        >
+          <Form.Item
+            name="title"
+            label="工作标题"
+            rules={[{ required: true, message: '请输入工作标题' }]}
+          >
             <Input
-              value={createForm.title}
-              onChange={e => setCreateForm(prev => ({ ...prev, title: e.target.value }))}
               placeholder="请输入工作标题"
+              maxLength={100}
             />
-          </div>
+          </Form.Item>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium">工作描述 *</label>
+          <Form.Item
+            name="description"
+            label="工作描述"
+            rules={[{ required: true, message: '请输入工作描述' }]}
+          >
             <TextArea
-              value={createForm.description}
-              onChange={e => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
               placeholder="请输入工作描述"
               rows={4}
+              maxLength={500}
             />
-          </div>
+          </Form.Item>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium">关联人员 *</label>
+          <Form.Item
+            name="assignedUserIds"
+            label="执行人员"
+            rules={[{ required: true, message: '请选择执行人员' }]}
+          >
             <Select
               mode="multiple"
-              value={createForm.assignedUserIds}
-              onChange={value => setCreateForm(prev => ({ ...prev, assignedUserIds: value }))}
-              placeholder="请选择关联人员"
+              placeholder="请选择执行人员"
               style={{ width: '100%' }}
             >
               {userList
-                .filter(user => user.role?.name !== 'admin' && user.role?.name !== 'boss')
+                .filter(
+                  user =>
+                    user.role?.name !== SystemRoleNames.ADMIN &&
+                    user.role?.name !== SystemRoleNames.BOSS
+                )
                 .map(user => (
                   <Option
                     key={user.id}
                     value={user.id}
                   >
-                    {user.name} ({user.code})
+                    {user.name}
                   </Option>
                 ))}
             </Select>
-          </div>
-        </div>
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   )

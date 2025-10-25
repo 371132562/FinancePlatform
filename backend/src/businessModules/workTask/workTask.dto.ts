@@ -16,26 +16,26 @@ export type WorkTaskItem = {
     id: string;
     name: string;
     code: string;
-    department: string;
+    department: string | null;
   };
   assignedUserIds: string[];
   assignedUsers: Array<{
     id: string;
     name: string;
     code: string;
-    department: string;
+    department: string | null;
   }>;
   companyId?: string | null;
   createTime: Date;
   updateTime: Date;
 };
 
-// 工作项详情（包含评论）
+// 工作项详情（包含回复）
 export type WorkTaskDetail = WorkTaskItem & {
   comments: CommentItem[];
 };
 
-// 评论项
+// 回复项
 export type CommentItem = {
   id: string;
   content: string;
@@ -45,7 +45,7 @@ export type CommentItem = {
     id: string;
     name: string;
     code: string;
-    department: string;
+    department: string | null;
     role?: {
       name: string;
     } | null;
@@ -136,7 +136,7 @@ export class DeleteWorkTaskDto {
 export type DeleteWorkTask = InstanceType<typeof DeleteWorkTaskDto>;
 
 /**
- * 创建评论 DTO
+ * 创建回复 DTO
  */
 export class CreateCommentDto {
   @IsString()
@@ -144,17 +144,17 @@ export class CreateCommentDto {
   taskId: string;
 
   @IsString()
-  @IsNotEmpty({ message: '评论内容不能为空' })
+  @IsNotEmpty({ message: '回复内容不能为空' })
   content: string;
 }
 export type CreateComment = InstanceType<typeof CreateCommentDto>;
 
 /**
- * 删除评论 DTO
+ * 删除回复 DTO
  */
 export class DeleteCommentDto {
   @IsString()
-  @IsNotEmpty({ message: '评论ID不能为空' })
+  @IsNotEmpty({ message: '回复ID不能为空' })
   id: string;
 }
 export type DeleteComment = InstanceType<typeof DeleteCommentDto>;

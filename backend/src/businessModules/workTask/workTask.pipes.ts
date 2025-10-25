@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 
 import { PrismaService } from '../../../prisma/prisma.service';
 import { ErrorCode } from '../../../types/response';
+import { isFullPermissionRole } from '../../common/config/roleNames';
 import { BusinessException } from '../../common/exceptions/businessException';
 
 /**
@@ -53,7 +54,7 @@ export class TaskPermissionPipe implements PipeTransform {
     }
 
     // admin 和 boss 可以访问所有工作项
-    if (roleName === 'admin' || roleName === 'boss') {
+    if (isFullPermissionRole(roleName)) {
       return data;
     }
 
@@ -73,7 +74,30 @@ export class TaskPermissionPipe implements PipeTransform {
 }
 
 /**
- * 验证评论是否存在的管道
+ * 验证工作项详情查询权限的管道
+ */
+@Injectable()
+export class TaskDetailPermissionPipe implements PipeTransform {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async transform(dto: { id: string }) {
+    const task = await this.prisma.workTask.findFirst({
+      where: {
+        id: dto.id,
+        delete: 0,
+      },
+    });
+
+    if (!task) {
+      throw new BusinessException(ErrorCode.TASK_NOT_FOUND, '工作项不存在');
+    }
+
+    return dto;
+  }
+}
+
+/**
+ * 验证回复是否存在的管道
  */
 @Injectable()
 export class CommentExistsPipe implements PipeTransform {
@@ -81,7 +105,7 @@ export class CommentExistsPipe implements PipeTransform {
 
   async transform(value: string) {
     if (!value) {
-      throw new BadRequestException('评论ID不能为空');
+      throw new BadRequestException('回复ID不能为空');
     }
 
     const comment = await this.prisma.workTaskComment.findFirst({
@@ -94,7 +118,7 @@ export class CommentExistsPipe implements PipeTransform {
     if (!comment) {
       throw new BusinessException(
         ErrorCode.TASK_COMMENT_NOT_FOUND,
-        '评论不存在',
+        '回复不存在',
       );
     }
 

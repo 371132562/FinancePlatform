@@ -110,7 +110,7 @@ const UserManagement: React.FC = () => {
       key: 'role',
       render: (_: unknown, record: UserItem) => {
         const roleName = record.role?.name || '未分配角色'
-        return roleName === 'admin' ? <Tag color="red">超级管理员</Tag> : <Tag>{roleName}</Tag>
+        return <Tag>{roleName}</Tag>
       }
     },
     {
@@ -195,7 +195,7 @@ const UserManagement: React.FC = () => {
         <Form
           form={form}
           layout="vertical"
-          initialValues={{ name: '', department: '' }}
+          initialValues={{ name: '', department: undefined }}
         >
           <Form.Item
             name="code"
@@ -223,10 +223,10 @@ const UserManagement: React.FC = () => {
                 <Select.Option
                   value={r.id}
                   key={r.id}
-                  label={r.name === 'admin' ? '超级管理员' : r.name}
+                  label={r.name}
                 >
                   <div>
-                    <div>{r.name === 'admin' ? <Tag color="red">超级管理员</Tag> : r.name}</div>
+                    <div>{r.name}</div>
                     {r.description && (
                       <div
                         style={{
@@ -260,7 +260,6 @@ const UserManagement: React.FC = () => {
           <Form.Item
             name="department"
             label="部门"
-            rules={[{ required: true, message: '请输入部门' }]}
           >
             <Input
               maxLength={20}

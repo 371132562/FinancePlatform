@@ -4,12 +4,12 @@ import { Prisma } from '@prisma/client';
 
 import { PrismaService } from '../../../prisma/prisma.service';
 import { ErrorCode } from '../../../types/response';
+import { SystemRoleNames } from '../../common/config/roleNames';
 import { BusinessException } from '../../common/exceptions/businessException';
 import { WinstonLoggerService } from '../../common/services/winston-logger.service';
 import {
   AssignRoleRoutesDto,
   CreateRoleDto,
-  DeleteRoleDto,
   RoleListResDto,
   UpdateRoleDto,
 } from './role.dto';
@@ -94,7 +94,7 @@ export class RoleService {
     try {
       this.logger.log(`[操作] 编辑角色 - ID: ${role.id}, 名称: ${role.name}`);
 
-      if (role.name === 'admin') {
+      if (role.name === (SystemRoleNames.ADMIN as string)) {
         this.logger.warn(
           `[验证失败] 编辑角色 - 超管角色 ${role.name} 不可编辑`,
         );
@@ -153,7 +153,7 @@ export class RoleService {
     try {
       this.logger.log(`[操作] 删除角色 - ID: ${role.id}, 名称: ${role.name}`);
 
-      if (role.name === 'admin') {
+      if (role.name === (SystemRoleNames.ADMIN as string)) {
         this.logger.warn(
           `[验证失败] 删除角色 - 超管角色 ${role.name} 不可删除`,
         );
@@ -216,7 +216,7 @@ export class RoleService {
         throw new BusinessException(ErrorCode.ROLE_NOT_FOUND, '角色不存在');
       }
 
-      if (role.name === 'admin') {
+      if (role.name === (SystemRoleNames.ADMIN as string)) {
         this.logger.warn(
           `[验证失败] 分配角色菜单权限 - 超管角色 ${role.name} 不可编辑`,
         );

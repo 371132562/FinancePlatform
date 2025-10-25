@@ -32,14 +32,6 @@ export class NotificationController {
   }
 
   /**
-   * 获取未读通知数量
-   */
-  @Post('unreadCount')
-  async getUnreadCount(@CurrentUser() user: UserPayload) {
-    return await this.notificationService.getUnreadCount(user.userId);
-  }
-
-  /**
    * 标记通知为已读
    */
   @Post('markRead')

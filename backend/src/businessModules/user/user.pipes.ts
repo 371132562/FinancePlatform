@@ -3,6 +3,7 @@ import type { User } from '@prisma/client';
 
 import { PrismaService } from '../../../prisma/prisma.service';
 import { ErrorCode } from '../../../types/response';
+import { SystemRoleNames } from '../../common/config/roleNames';
 import { BusinessException } from '../../common/exceptions/businessException';
 
 /**
@@ -20,7 +21,7 @@ export class UserCodeExistsValidationPipe implements PipeTransform {
     }
 
     // 系统保留编号检查
-    if (value === 'admin') {
+    if (value === (SystemRoleNames.ADMIN as string)) {
       throw new BusinessException(ErrorCode.USER_CODE_EXIST, '超管编号不可用');
     }
 

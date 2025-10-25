@@ -9,7 +9,6 @@ import {
   MarkReadDto,
   NotificationListDto,
   NotificationListResDto,
-  UnreadCountDto,
 } from './notification.dto';
 
 @Injectable()
@@ -21,14 +20,19 @@ export class NotificationService {
 
   /**
    * 创建工作派发通知
+   * @param taskId 工作项ID
+   * @param creatorId 创建者ID
+   * @param assignedUserIds 执行人员ID列表
+   * @param isUpdate 是否为更新操作（默认为false，表示创建）
    */
   async createTaskAssignNotification(
     taskId: string,
     creatorId: string,
     assignedUserIds: string[],
+    isUpdate: boolean = false,
   ) {
     this.logger.log(
-      `[操作] 创建工作派发通知 - 工作项ID: ${taskId}, 关联用户: ${assignedUserIds.length}个`,
+      `[操作] 创建工作派发通知 - 工作项ID: ${taskId}, 关联用户: ${assignedUserIds.length}个, 是否更新: ${isUpdate}`,
     );
 
     try {
@@ -54,17 +58,33 @@ export class NotificationService {
         content: string;
         relatedId: string;
       }> = [];
+
+      // 为执行人员创建通知
       for (const userId of assignedUserIds) {
         if (userId !== creatorId) {
           notifications.push({
             userId,
             module: 'work',
             type: 'assigned',
-            title: '新的工作任务',
-            content: `您有新的工作任务：${task.title}`,
+            title: isUpdate ? '工作任务更新' : '新的工作任务',
+            content: isUpdate
+              ? `您的工作任务有更新：${task.title}`
+              : `您有新的工作任务：${task.title}`,
             relatedId: taskId,
           });
         }
+      }
+
+      // 如果是更新操作，且创建者不在执行人员列表中，给创建者发送通知
+      if (isUpdate && !assignedUserIds.includes(creatorId)) {
+        notifications.push({
+          userId: creatorId,
+          module: 'work',
+          type: 'assigned',
+          title: '工作项更新通知',
+          content: `您的工作项已更新：${task.title}`,
+          relatedId: taskId,
+        });
       }
 
       if (notifications.length > 0) {
@@ -95,7 +115,7 @@ export class NotificationService {
     this.logger.log(`[操作] 获取通知列表 - 用户: ${userId}`);
 
     try {
-      const where: any = {
+      const where: Record<string, unknown> = {
         userId,
         delete: 0,
       };
@@ -107,8 +127,13 @@ export class NotificationService {
       const notifications = await this.prisma.notification.findMany({
         where,
         orderBy: { createTime: 'desc' },
-        skip: dto.page ? (dto.page - 1) * (dto.pageSize || 10) : 0,
-        take: dto.pageSize || 10,
+        // 如果不传pageSize或pageSize为0，则不分页
+        ...(dto.pageSize && dto.pageSize > 0
+          ? {
+              skip: dto.page ? (dto.page - 1) * dto.pageSize : 0,
+              take: dto.pageSize,
+            }
+          : {}),
       });
 
       this.logger.log(
@@ -118,32 +143,6 @@ export class NotificationService {
     } catch (error) {
       this.logger.error(
         `[失败] 获取通知列表 - ${error instanceof Error ? error.message : '未知错误'}`,
-        error instanceof Error ? error.stack : undefined,
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * 获取用户未读通知数量
-   */
-  async getUnreadCount(userId: string): Promise<UnreadCountDto> {
-    this.logger.log(`[操作] 获取未读通知数量 - 用户: ${userId}`);
-
-    try {
-      const count = await this.prisma.notification.count({
-        where: {
-          userId,
-          isRead: 0,
-          delete: 0,
-        },
-      });
-
-      this.logger.log(`[操作] 获取未读通知数量成功 - 未读数量: ${count}`);
-      return { count };
-    } catch (error) {
-      this.logger.error(
-        `[失败] 获取未读通知数量 - ${error instanceof Error ? error.message : '未知错误'}`,
         error instanceof Error ? error.stack : undefined,
       );
       throw error;

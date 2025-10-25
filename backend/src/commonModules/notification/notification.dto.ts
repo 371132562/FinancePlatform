@@ -51,13 +51,6 @@ export class MarkReadDto {
 export type MarkRead = InstanceType<typeof MarkReadDto>;
 
 /**
- * 未读数量响应类型
- */
-export type UnreadCountDto = {
-  count: number;
-};
-
-/**
  * 通知列表响应类型
  */
 export type NotificationListResDto = NotificationItem[];
