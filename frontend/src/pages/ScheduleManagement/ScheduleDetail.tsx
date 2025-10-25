@@ -191,7 +191,14 @@ const ScheduleDetail: FC = () => {
                         <div className="mb-2 text-xs text-gray-500">
                           {dayjs(comment.createTime).format('YYYY年MM月DD日 HH:mm:ss')}
                         </div>
-                        <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-800">
+                        <div
+                          className="whitespace-pre-wrap break-words text-sm leading-relaxed text-gray-800"
+                          style={{
+                            wordWrap: 'break-word',
+                            wordBreak: 'break-word',
+                            overflowWrap: 'break-word'
+                          }}
+                        >
                           {comment.content}
                         </div>
                       </div>
@@ -209,7 +216,6 @@ const ScheduleDetail: FC = () => {
                   onChange={e => setNewComment(e.target.value)}
                   placeholder="添加回复..."
                   rows={5}
-                  className="!border-gray-300 focus:!border-blue-500"
                 />
                 <div className="flex justify-end">
                   <Button

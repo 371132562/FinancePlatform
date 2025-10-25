@@ -64,8 +64,7 @@ import {
   UploadResponse,
   UserItem,
   UserListResDto,
-  UserLogFilesReq,
-  UserProfileDto
+  UserLogFilesReq
 } from 'template-backend/types/dto'
 
 /**
@@ -94,7 +93,7 @@ export type RouteItem = {
 export type { ExportFormat, PaginatedResponse }
 
 // 认证相关类型
-export type { Login, LoginResponse, TokenPayloadDto, UserProfileDto }
+export type { Login, LoginResponse, TokenPayloadDto }
 
 // 文章管理相关类型
 export type {

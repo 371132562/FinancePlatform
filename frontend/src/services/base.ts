@@ -108,14 +108,14 @@ const handleResponse = async <T>(response: Response): Promise<ResponseBody<T>> =
           break
         default:
           // 其他业务错误
-          message.open({ type: 'error', content: `错误：${msg}` })
+          message.error(`错误：${msg}`)
           break
       }
       return Promise.reject(data)
     }
   } else {
     // HTTP 非 200 错误
-    message.open({ type: 'error', content: `错误：HTTP ${response.status} - ${msg || '未知错误'}` })
+    message.error(`错误：HTTP ${response.status} - ${msg || '未知错误'}`)
     return Promise.reject(new Error(msg || 'HTTP Error'))
   }
 }
@@ -124,13 +124,13 @@ const handleResponse = async <T>(response: Response): Promise<ResponseBody<T>> =
 const handleError = (error: Error | unknown) => {
   if (error instanceof Error && error.name === 'AbortError') {
     // 请求超时
-    message.open({ type: 'error', content: '错误：请求超时，请稍后再试！' })
+    message.error('错误：请求超时，请稍后再试！')
   } else if (error instanceof Error && error.message) {
     // 其他错误
-    message.open({ type: 'error', content: '错误：请求发送失败：' + error.message })
+    message.error('错误：请求发送失败：' + error.message)
   } else {
     // 网络错误
-    message.open({ type: 'error', content: '错误：服务器无响应，请检查网络或稍后再试！' })
+    message.error('错误：服务器无响应，请检查网络或稍后再试！')
   }
   return Promise.reject(error)
 }
@@ -186,7 +186,7 @@ const createRequest = async <T>(
         // 如果无法解析错误响应，使用默认错误信息
       }
 
-      message.open({ type: 'error', content: `错误：HTTP ${response.status} - ${errorMessage}` })
+      message.error(`错误：HTTP ${response.status} - ${errorMessage}`)
       return Promise.reject(new Error(errorMessage))
     }
 

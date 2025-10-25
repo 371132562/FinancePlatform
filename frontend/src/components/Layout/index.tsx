@@ -1,23 +1,11 @@
-import { KeyOutlined, LoginOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons' // 导入图标
-import {
-  Avatar,
-  Badge,
-  Breadcrumb,
-  Button,
-  Dropdown,
-  FloatButton,
-  Layout,
-  Menu,
-  MenuProps,
-  message
-} from 'antd'
+import { Breadcrumb, FloatButton, Layout, Menu, MenuProps } from 'antd'
 import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { Link, useLocation, useNavigate, useOutlet } from 'react-router'
 
-import ChangePasswordModal from '@/components/ChangePasswordModal'
 import ErrorPage from '@/components/Error'
 import Forbidden from '@/components/Forbidden'
+import { UserAvatarDropdown } from '@/components/UserAvatarDropdown'
 import { isFullPermissionRole } from '@/config/roleNames'
 import {
   getAllRoutes,
@@ -26,8 +14,6 @@ import {
   getTopMenuRoutes
 } from '@/router/routesConfig'
 import { useAuthStore } from '@/stores/authStore'
-import { useNotificationStore } from '@/stores/notificationStore'
-import { dayjs } from '@/utils/dayjs'
 
 const { Header, Sider, Content /* Footer */ } = Layout
 
@@ -43,20 +29,10 @@ export const Component: FC = () => {
       ? { name: user.role.name, allowedRoutes: user.role.allowedRoutes || [] }
       : undefined
   )
-  const logout = useAuthStore(state => state.logout)
   const [collapsed, setCollapsed] = useState(false)
   const [openKeys, setOpenKeys] = useState<string[]>([])
-  const [changePasswordModalOpen, setChangePasswordModalOpen] = useState(false)
   const { pathname } = useLocation()
   const scrollRef = useRef<HTMLDivElement | null>(null)
-
-  // 通知相关状态
-  const unreadCount = useNotificationStore(state => state.unreadCount)
-  const unreadNotifications = useNotificationStore(state => state.unreadNotifications)
-  const fetchUnreadNotifications = useNotificationStore(state => state.fetchUnreadNotifications)
-  const markAsRead = useNotificationStore(state => state.markAsRead)
-  const markAllAsRead = useNotificationStore(state => state.markAllAsRead)
-  const clearNotifications = useNotificationStore(state => state.clearNotifications)
 
   // 主动获取用户信息
   useEffect(() => {
@@ -66,228 +42,9 @@ export const Component: FC = () => {
     }
   }, [token])
 
-  // 获取未读通知（定时轮询）
-  useEffect(() => {
-    if (token) {
-      // 初始加载
-      fetchUnreadNotifications()
-
-      // 每30秒轮询一次
-      const interval = setInterval(() => {
-        fetchUnreadNotifications()
-      }, 30000)
-      return () => clearInterval(interval)
-    }
-  }, [token, fetchUnreadNotifications])
-
   const handleMenuClick: MenuProps['onClick'] = e => {
     navigate(e.key)
   }
-
-  // 通知项组件
-  const NotificationItem = ({
-    notification
-  }: {
-    notification: {
-      id: string
-      module: string
-      type: string
-      title: string
-      content: string
-      isRead: number
-      relatedId?: string | null
-      createTime: Date
-    }
-  }) => {
-    // 根据模块和类型生成跳转URL
-    const getNotificationUrl = (notif: typeof notification) => {
-      const { module, relatedId } = notif
-      switch (module) {
-        case 'work':
-          return `/work/detail/${relatedId}`
-        case 'article':
-          return `/article/detail/${relatedId}`
-        case 'user':
-          return `/system/userManagement`
-        case 'system':
-          return '/system/maintenance'
-        default:
-          return '/notifications'
-      }
-    }
-
-    return (
-      <div
-        className={`cursor-pointer rounded p-3 hover:bg-gray-50 ${!notification.isRead ? 'border-l-4 border-blue-400 bg-blue-50' : ''}`}
-        onClick={async () => {
-          const url = getNotificationUrl(notification)
-          navigate(url)
-          if (!notification.isRead) {
-            const success = await markAsRead([notification.id])
-            if (success) {
-              // 重新获取未读通知列表以更新右上角显示
-              fetchUnreadNotifications()
-            }
-          }
-        }}
-      >
-        <div className="font-medium">{notification.title}</div>
-        <div className="mt-1 text-gray-400">
-          {dayjs(notification.createTime).format('YYYY年MM月DD日 HH:mm:ss')}
-        </div>
-        <div className="mt-1 text-gray-600">{notification.content}</div>
-      </div>
-    )
-  }
-
-  // 用户下拉菜单项，hover触发，内容更丰富
-  const userMenuItems: MenuProps['items'] = user
-    ? [
-        {
-          key: 'userInfo',
-          label: (
-            <div
-              className="min-w-[280px] max-w-[340px] rounded-lg bg-white px-4 py-3"
-              style={{ lineHeight: 1.6 }}
-            >
-              {/* 用户名 */}
-              <div className="mb-2 text-base font-semibold text-gray-800">{user.name}</div>
-              {/* 用户名 */}
-              <div className="mb-2 flex items-center text-sm text-gray-600">
-                <span className="mr-2 text-gray-400">用户名：</span>
-                <span className="font-mono">{user.code || '-'}</span>
-              </div>
-              {/* 角色名称 */}
-              <div className="mb-2 flex items-center text-sm text-gray-600">
-                <span className="mr-2 text-gray-400">角色：</span>
-                <span>{user.role?.name || '-'}</span>
-              </div>
-              {/* 所属部门 */}
-              <div className="flex items-center text-sm text-gray-600">
-                <span className="mr-2 text-gray-400">部门：</span>
-                <span>{user.department || '-'}</span>
-              </div>
-            </div>
-          ),
-          disabled: true
-        },
-        {
-          type: 'divider'
-        },
-        {
-          key: 'notifications',
-          label: (
-            <div className="min-w-[320px] max-w-[400px] rounded-lg bg-white">
-              <div className="border-b px-4 py-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">通知消息</span>
-                  <div className="flex items-center !space-x-2">
-                    <Badge count={unreadCount} />
-                    {unreadCount > 0 && (
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={e => {
-                          e.stopPropagation()
-                          markAllAsRead()
-                        }}
-                      >
-                        全部已读
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="max-h-64 overflow-y-auto">
-                {unreadNotifications.length > 0 ? (
-                  <>
-                    {unreadNotifications.slice(0, 3).map(notification => (
-                      <NotificationItem
-                        key={notification.id}
-                        notification={notification}
-                      />
-                    ))}
-                    {unreadNotifications.length > 3 && (
-                      <div className="p-3 text-center">
-                        <div className="text-gray-500">
-                          还有 {unreadNotifications.length - 3} 条未读通知
-                        </div>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="p-4 text-center text-sm text-gray-500">暂无新通知</div>
-                )}
-              </div>
-              <div className="border-t px-4 py-2 text-center">
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => navigate('/notifications')}
-                >
-                  查看全部
-                </Button>
-              </div>
-            </div>
-          ),
-          disabled: true
-        },
-        {
-          type: 'divider'
-        },
-        {
-          key: 'changePassword',
-          label: <div className="px-2 py-1 text-blue-600 hover:text-blue-700">修改密码</div>,
-          icon: <KeyOutlined />,
-          onClick: () => {
-            setChangePasswordModalOpen(true)
-          }
-        },
-        {
-          type: 'divider'
-        },
-        {
-          key: 'logout',
-          label: <div className="px-2 py-1 text-red-600 hover:text-red-700">退出登录</div>,
-          icon: <LogoutOutlined />,
-          onClick: () => {
-            const success = logout()
-            if (success) {
-              // 清空通知状态
-              clearNotifications()
-              message.success('退出成功')
-            }
-            navigate('/home')
-          }
-        }
-      ]
-    : [
-        {
-          key: 'guestInfo',
-          label: (
-            <div
-              className="min-w-[280px] max-w-[340px] rounded-lg bg-white px-4 py-3"
-              style={{ lineHeight: 1.6 }}
-            >
-              {/* 访客提示 */}
-              <div className="mb-2 text-base font-semibold text-gray-800">访客模式</div>
-              <div className="text-sm text-gray-600">登录后可使用全部功能</div>
-            </div>
-          ),
-          disabled: true
-        },
-        {
-          type: 'divider'
-        },
-        {
-          key: 'login',
-          label: <div className="px-2 py-1 text-blue-600 hover:text-blue-700">立即登录</div>,
-          icon: <LoginOutlined />,
-          onClick: () => {
-            navigate('/login')
-          }
-        }
-      ]
 
   // 计算顶部导航菜单的激活项
   const topNavSelectedKey = useMemo(() => {
@@ -414,36 +171,10 @@ export const Component: FC = () => {
         />
         <div className="flex-grow" />
         <div className="flex-shrink-0">
-          {/* 用户头像及信息浮窗，hover触发 */}
-          <Dropdown
-            menu={{ items: userMenuItems }}
-            placement="bottomRight"
-            trigger={['hover']} // 改为hover触发
-            overlayClassName="user-info-dropdown"
-          >
-            <div
-              className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 transition-colors hover:bg-white/10"
-              title={user?.name || '访客'}
-            >
-              {/* 用户头像带通知徽章 */}
-              <Badge
-                count={unreadCount}
-                size="small"
-              >
-                <Avatar
-                  icon={<UserOutlined />}
-                  className={`h-8 w-8 cursor-pointer text-sm hover:opacity-80 ${
-                    user ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-500 hover:bg-gray-600'
-                  }`}
-                  style={{ width: 32, height: 32 }}
-                />
-              </Badge>
-              {/* 用户名显示在头像旁边 */}
-              <span className="max-w-[120px] truncate text-sm font-medium text-white">
-                {user?.name || '访客'}
-              </span>
-            </div>
-          </Dropdown>
+          <UserAvatarDropdown
+            user={user}
+            isLoggedIn={!!user}
+          />
         </div>
       </Header>
       <Layout className="flex-grow">
@@ -511,14 +242,6 @@ export const Component: FC = () => {
           </Footer> */}
         </Layout>
       </Layout>
-
-      {/* 修改密码弹窗 */}
-      <ChangePasswordModal
-        open={changePasswordModalOpen}
-        onCancel={() => setChangePasswordModalOpen(false)}
-        userId={user?.id}
-        title="修改密码"
-      />
     </Layout>
   )
 }

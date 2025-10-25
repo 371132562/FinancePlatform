@@ -39,11 +39,6 @@ export type LoginResponse = {
 export type LoginResponseDto = LoginResponse;
 
 /**
- * 用户资料 DTO
- */
-export type UserProfileDto = UserItem;
-
-/**
  * 登录（哈希）DTO
  */
 export class LoginWithHashDto {
@@ -70,4 +65,20 @@ export type TokenPayloadDto = {
   roleName?: string;
   iat?: number;
   exp?: number;
+};
+
+/**
+ * 用户档案 DTO
+ */
+export type UserProfileDto = {
+  id: string;
+  code: string;
+  name: string;
+  department: string | null;
+  email: string | null;
+  phone: string | null;
+  role: {
+    name: string;
+    allowedRoutes: string[];
+  } | null;
 };

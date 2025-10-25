@@ -12,7 +12,6 @@ import {
 } from './schedule.dto';
 import {
   CommentCreatePermissionPipe,
-  ScheduleDetailPermissionPipe,
   ScheduleIdValidationPipe,
   ScheduleUpdatePermissionPipe,
 } from './schedule.pipes';
@@ -49,7 +48,6 @@ export class ScheduleController {
    * 最佳实践：Pipe负责基础验证，Service负责业务逻辑验证
    */
   @Post('detail')
-  @UsePipes(ScheduleIdValidationPipe, ScheduleDetailPermissionPipe)
   async getScheduleDetail(
     @CurrentUser() user: UserPayload,
     @Body() dto: ScheduleDetailQueryDto,

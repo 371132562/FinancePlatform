@@ -4,13 +4,13 @@ import { persist } from 'zustand/middleware'
 
 import { challengeApiUrl, loginApiUrl, profileApiUrl } from '../services/apis'
 import http from '../services/base'
-import type { Login, LoginResponse, UserProfileDto } from '../types'
+import type { Login, LoginResponse, UserItem } from '../types'
 import { decryptSalt, encryptData } from '../utils/crypto'
 
 // 认证store的类型定义
 export type AuthStore = {
   token: string | null // JWT token
-  user: UserProfileDto | null // 当前用户信息
+  user: UserItem | null // 当前用户信息
   loading: boolean // 加载状态
   error: string | null // 错误信息
   login: (data: Login) => Promise<boolean>
@@ -58,7 +58,7 @@ export const useAuthStore = create<AuthStore>()(
       async fetchProfile() {
         set({ loading: true })
         try {
-          const user = await http.post<UserProfileDto>(profileApiUrl)
+          const user = await http.post<UserItem>(profileApiUrl)
           set({ user: user.data })
         } catch (err: unknown) {
           // 根据后端错误码处理
@@ -112,12 +112,12 @@ export const useAuthStore = create<AuthStore>()(
 // =========================
 
 // 安全解析本地持久化的 auth-storage
-const readPersistedAuth = (): { token: string | null; user: UserProfileDto | null } => {
+const readPersistedAuth = (): { token: string | null; user: UserItem | null } => {
   try {
     const raw = localStorage.getItem('auth-storage') || '{}'
-    const parsed = JSON.parse(raw) as { state?: { token?: string; user?: UserProfileDto } }
+    const parsed = JSON.parse(raw) as { state?: { token?: string; user?: UserItem } }
     const token = (parsed.state?.token as string | undefined) || null
-    const user = (parsed.state?.user as UserProfileDto | undefined) || null
+    const user = (parsed.state?.user as UserItem | undefined) || null
     return { token, user }
   } catch {
     return { token: null, user: null }
