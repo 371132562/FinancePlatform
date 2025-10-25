@@ -19,8 +19,8 @@ const RoleManagement = lazy(() => import('@/pages/System/RoleManagement/RoleMana
 const SystemMaintenance = lazy(() => import('@/pages/System/SystemMaintenance'))
 const UserManagement = lazy(() => import('@/pages/System/UserManagement/UserManagement'))
 const SystemLogs = lazy(() => import('@/pages/System/SystemLogs'))
-const WorkTaskList = lazy(() => import('@/pages/WorkManagement/WorkTaskList.tsx'))
-const WorkTaskDetail = lazy(() => import('@/pages/WorkManagement/WorkTaskDetail.tsx'))
+const ScheduleList = lazy(() => import('@/pages/ScheduleManagement/ScheduleList.tsx'))
+const ScheduleDetail = lazy(() => import('@/pages/ScheduleManagement/ScheduleDetail.tsx'))
 const NotificationList = lazy(() => import('@/pages/Notification/NotificationList.tsx'))
 
 // 统一的路由配置数组，通过 menuPosition 区分顶部与侧边栏
@@ -44,15 +44,20 @@ export const routes: RouteItem[] = [
       }
     ]
   },
-  // 工作管理菜单
+  // 员工日程菜单
   {
-    path: '/work',
-    title: '工作管理',
+    path: '/schedule',
+    title: '员工日程',
     icon: <ProjectOutlined />,
     menuPosition: 'side',
     children: [
-      { path: '/work/list', title: '工作列表', component: WorkTaskList },
-      { path: '/work/detail/:id', title: '工作详情', component: WorkTaskDetail, hideInMenu: true }
+      { path: '/schedule/list', title: '日程列表', component: ScheduleList },
+      {
+        path: '/schedule/detail/:id',
+        title: '日程详情',
+        component: ScheduleDetail,
+        hideInMenu: true
+      }
     ]
   },
   {

@@ -29,7 +29,8 @@ export class UserController {
   @Post('create')
   async createUser(
     @Body() createUserEncryptedDto: CreateUserEncryptedDto,
-    @Body('code', UserCodeExistsValidationPipe) _code: string,
+
+    @Body('code', UserCodeExistsValidationPipe) _: string,
   ) {
     return this.userService.createUserEncrypted(createUserEncryptedDto);
   }

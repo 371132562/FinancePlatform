@@ -7,7 +7,16 @@ import {
   notificationMarkReadApiUrl
 } from '../services/apis'
 import http from '../services/base'
-import type { NotificationItem, NotificationList } from '../types'
+import type { NotificationItem, NotificationList, NotificationType } from '../types'
+import { getNotificationTypeOptions } from '../types'
+
+/**
+ * 获取通知类型显示文本
+ */
+export const getNotificationTypeLabel = (type: NotificationType): string => {
+  const typeOption = getNotificationTypeOptions().find(option => option.value === type)
+  return typeOption ? typeOption.label : type
+}
 
 // 通知store的类型定义
 export type NotificationStore = {
@@ -36,13 +45,12 @@ export const useNotificationStore = create<NotificationStore>(set => ({
 
   // 获取通知列表
   async fetchNotifications(params) {
-    set({ loading: true, error: null })
+    set({ loading: true })
     try {
       const res = await http.post<NotificationItem[]>(notificationListApiUrl, params || {})
-      set({ notifications: res.data, loading: false, error: null })
-    } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : '获取通知列表失败'
-      set({ loading: false, error: errorMsg })
+      set({ notifications: res.data })
+    } finally {
+      set({ loading: false })
     }
   },
 
@@ -65,7 +73,7 @@ export const useNotificationStore = create<NotificationStore>(set => ({
 
   // 标记通知为已读
   async markAsRead(ids) {
-    set({ loading: true, error: null })
+    set({ loading: true })
     try {
       await http.post(notificationMarkReadApiUrl, { ids })
 
@@ -77,22 +85,20 @@ export const useNotificationStore = create<NotificationStore>(set => ({
         unreadNotifications: state.unreadNotifications.filter(
           notification => !ids.includes(notification.id)
         ),
-        unreadCount: Math.max(0, state.unreadCount - ids.length),
-        loading: false,
-        error: null
+        unreadCount: Math.max(0, state.unreadCount - ids.length)
       }))
 
       return true
-    } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : '标记已读失败'
-      set({ loading: false, error: errorMsg })
+    } catch {
       return false
+    } finally {
+      set({ loading: false })
     }
   },
 
   // 标记所有通知为已读
   async markAllAsRead() {
-    set({ loading: true, error: null })
+    set({ loading: true })
     try {
       await http.post(notificationMarkAllReadApiUrl)
 
@@ -100,30 +106,27 @@ export const useNotificationStore = create<NotificationStore>(set => ({
       set(state => ({
         notifications: state.notifications.map(notification => ({ ...notification, isRead: 1 })),
         unreadNotifications: [],
-        unreadCount: 0,
-        loading: false,
-        error: null
+        unreadCount: 0
       }))
 
       return true
-    } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : '全部标记已读失败'
-      set({ loading: false, error: errorMsg })
+    } catch {
       return false
+    } finally {
+      set({ loading: false })
     }
   },
 
   // 删除通知
   async deleteNotification(id) {
-    set({ loading: true, error: null })
+    set({ loading: true })
     try {
       await http.post(notificationDeleteApiUrl, { id })
-      set({ loading: false, error: null })
       return true
-    } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : '删除通知失败'
-      set({ loading: false, error: errorMsg })
+    } catch {
       return false
+    } finally {
+      set({ loading: false })
     }
   },
 

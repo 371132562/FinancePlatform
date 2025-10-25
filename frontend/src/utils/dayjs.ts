@@ -2,6 +2,7 @@
 export {
   dateToYear,
   default as dayjs,
+  formatDateTime,
   formatYear,
   getCurrentYear,
   getYear,

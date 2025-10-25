@@ -10,7 +10,8 @@ const { generateUsers } = require('./initialData/authData');
 // 系统内置角色名称常量
 const SystemRoleNames = {
   ADMIN: '系统管理员',
-  BOSS: '公司管理者'
+  BOSS: '公司管理者',
+  EMPLOYEE: '员工'
 }
 
 const prisma = new PrismaClient();
@@ -65,9 +66,49 @@ async function seedAuthData() {
     console.log('公司管理者角色已创建');
   }
 
+  // 创建/更新员工角色
+  let employeeRole = await prisma.role.findFirst({ where: { name: SystemRoleNames.EMPLOYEE, delete: 0 } });
+  if (employeeRole) {
+    employeeRole = await prisma.role.update({
+      where: { id: employeeRole.id },
+      data: {
+        description: '员工角色，拥有员工日程管理和通知消息权限',
+        allowedRoutes: ['/schedule/list', '/schedule/detail', '/notifications'],
+      },
+    });
+    console.log('员工角色已存在，已更新');
+  } else {
+    employeeRole = await prisma.role.create({
+      data: {
+        name: SystemRoleNames.EMPLOYEE,
+        description: '员工角色，拥有员工日程管理和通知消息权限',
+        allowedRoutes: ['/schedule/list', '/schedule/detail', '/notifications'],
+      },
+    });
+    console.log('员工角色已创建');
+  }
+
 
   const encryptedUsers = await generateUsers();
   for (const user of encryptedUsers) {
+    // 根据用户代码确定角色
+    let roleId;
+    let roleName;
+    if (user.code === '88888888') {
+      roleId = adminRole.id;
+      roleName = '系统管理员';
+    } else if (user.code.startsWith('b')) {
+      roleId = bossRole.id;
+      roleName = '公司管理者';
+    } else if (user.code.startsWith('e')) {
+      roleId = employeeRole.id;
+      roleName = '员工';
+    } else {
+      // 默认分配为员工角色
+      roleId = employeeRole.id;
+      roleName = '员工';
+    }
+
     const existingUser = await prisma.user.findFirst({ where: { code: user.code, delete: 0 } });
     if (existingUser) {
       await prisma.user.update({
@@ -78,10 +119,10 @@ async function seedAuthData() {
           email: user.email,
           phone: user.phone,
           password: user.password,
-          roleId: adminRole.id,
+          roleId: roleId,
         },
       });
-      console.log(`系统管理员用户 "${user.name}" (${user.code}) 已更新`);
+      console.log(`${roleName}用户 "${user.name}" (${user.code}) 已更新`);
     } else {
       await prisma.user.create({
         data: {
@@ -91,18 +132,21 @@ async function seedAuthData() {
           email: user.email,
           phone: user.phone,
           password: user.password,
-          roleId: adminRole.id,
+          roleId: roleId,
         },
       });
-      console.log(`系统管理员用户 "${user.name}" (${user.code}) 已创建`);
+      console.log(`${roleName}用户 "${user.name}" (${user.code}) 已创建`);
     }
   }
   console.log('认证数据初始化完成！');
   console.log('\n角色权限说明：');
   console.log('- 系统管理员: 拥有所有权限，可以访问所有功能模块');
   console.log('- 公司管理者: 公司管理者角色，拥有所有权限，可以访问所有功能模块');
+  console.log('- 员工: 拥有员工日程管理和通知消息权限');
   console.log('\n初始用户账号：');
-  console.log('系统管理员 账号/密码均为 8个8');
+  console.log('系统管理员: 88888888/88888888');
+  console.log('管理者: b1/b1, b2/b2');
+  console.log('员工: e1/e1, e2/e2, e3/e3, e4/e4');
 }
 
 /**

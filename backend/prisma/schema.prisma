@@ -27,10 +27,10 @@ model User {
   updateTime DateTime @updatedAt
   delete     Int      @default(0) // 软删除标记，0表示未删除，1表示已删除
 
-  // 工作项相关关联
-  createdTasks  WorkTask[]        @relation("TaskCreator")
-  comments      WorkTaskComment[] @relation("CommentUser")
-  notifications Notification[]    @relation("UserNotifications")
+  // 日程相关关联
+  createdSchedules Schedule[]        @relation("ScheduleCreator")
+  comments         ScheduleComment[] @relation("CommentUser")
+  notifications    Notification[]    @relation("UserNotifications")
 
   @@unique([code, delete]) // 邮箱在未删除状态下唯一
   @@index([id])
@@ -94,38 +94,38 @@ model Image {
   @@index([id, delete])
 }
 
-// 工作项表
-model WorkTask {
+// 员工日程表
+model Schedule {
   id              String            @id @default(uuid())
-  title           String // 工作标题
-  description     String // 工作描述（长文本）
-  status          String            @default("未完成") // 状态：未完成、进行中、有风险、已完成、已停止
+  title           String // 日程标题
+  description     String // 日程描述（长文本）
+  status          String            @default("待完成") // 状态：待完成、进行中、有风险、已完成、已停止
   creatorId       String // 创建人ID
-  creator         User              @relation("TaskCreator", fields: [creatorId], references: [id])
+  creator         User              @relation("ScheduleCreator", fields: [creatorId], references: [id])
   assignedUserIds Json              @default("[]") // 关联员工ID数组
   companyId       String? // 关联企业ID（可选，为后续扩展预留）
   createTime      DateTime          @default(now())
   updateTime      DateTime          @updatedAt
   delete          Int               @default(0)
-  comments        WorkTaskComment[]
+  comments        ScheduleComment[]
 
   @@index([creatorId, delete])
   @@index([status, delete])
 }
 
-// 工作评论表
-model WorkTaskComment {
+// 日程回复表
+model ScheduleComment {
   id         String   @id @default(uuid())
-  taskId     String // 工作项ID
-  task       WorkTask @relation(fields: [taskId], references: [id])
-  userId     String // 评论人ID
+  scheduleId String // 日程ID
+  schedule   Schedule @relation(fields: [scheduleId], references: [id])
+  userId     String // 回复人ID
   user       User     @relation("CommentUser", fields: [userId], references: [id])
-  content    String // 评论内容（长文本）
+  content    String // 回复内容（长文本）
   createTime DateTime @default(now())
   updateTime DateTime @updatedAt
   delete     Int      @default(0)
 
-  @@index([taskId, delete])
+  @@index([scheduleId, delete])
   @@index([userId, delete])
 }
 
@@ -134,7 +134,7 @@ model Notification {
   id         String   @id @default(uuid())
   userId     String // 接收通知的用户ID
   user       User     @relation("UserNotifications", fields: [userId], references: [id])
-  module     String   @default("work") // 业务模块：work（工作）、article（文章）、user（用户）、system（系统）
+  module     String   @default("schedule") // 业务模块：schedule（日程）、article（文章）、user（用户）、system（系统）
   type       String // 通知类型：assigned（分配）、updated（更新）、completed（完成）、commented（评论）
   title      String // 通知标题
   content    String // 通知内容

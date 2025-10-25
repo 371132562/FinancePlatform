@@ -39,14 +39,13 @@ export const systemUserLogsListFiles = '/system/logs/user/files' // 获取用户
 export const systemUserLogsRead = '/system/logs/user/read' // 读取用户日志内容
 export const systemUserLogsList = '/system/logs/user/list' // 获取用户日志列表
 
-// 工作项相关 API
-export const workTaskListApiUrl = '/workTask/list' // 获取工作项列表
-export const workTaskDetailApiUrl = '/workTask/detail' // 获取工作项详情
-export const workTaskCreateApiUrl = '/workTask/create' // 创建工作项
-export const workTaskUpdateApiUrl = '/workTask/update' // 更新工作项
-export const workTaskDeleteApiUrl = '/workTask/delete' // 删除工作项
-export const workTaskCommentCreateApiUrl = '/workTask/comment/create' // 创建回复
-export const workTaskCommentDeleteApiUrl = '/workTask/comment/delete' // 删除回复
+// 日程相关 API
+export const scheduleListApiUrl = '/schedule/list' // 获取日程列表
+export const scheduleDetailApiUrl = '/schedule/detail' // 获取日程详情
+export const scheduleCreateApiUrl = '/schedule/create' // 创建日程
+export const scheduleUpdateStatusApiUrl = '/schedule/updateStatus' // 更新日程状态
+export const scheduleDeleteApiUrl = '/schedule/delete' // 删除日程
+export const scheduleCommentCreateApiUrl = '/schedule/comment/create' // 创建回复
 
 // 通知相关 API
 export const notificationListApiUrl = '/notification/list' // 获取通知列表

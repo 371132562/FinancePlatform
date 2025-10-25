@@ -39,7 +39,7 @@ const RoleManagement: React.FC = () => {
 
   useEffect(() => {
     fetchRoleList()
-  }, [fetchRoleList])
+  }, [])
 
   // 打开新建/编辑弹窗
   const openModal = (role?: RoleListItemDto) => {
@@ -147,6 +147,7 @@ const RoleManagement: React.FC = () => {
             cancelText="取消"
           >
             <Button
+              variant="outlined"
               danger
               disabled={
                 record.name === SystemRoleNames.ADMIN || record.name === SystemRoleNames.BOSS
@@ -165,7 +166,8 @@ const RoleManagement: React.FC = () => {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-bold"></h2>
         <Button
-          type="primary"
+          variant="outlined"
+          color="primary"
           icon={<PlusOutlined />}
           onClick={() => openModal()}
         >

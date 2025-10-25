@@ -61,7 +61,8 @@ const ErrorPage = ({ error: propsError, resetErrorBoundary }: IProps) => {
       subTitle={subTitle}
       extra={
         <Button
-          type="primary"
+          variant="outlined"
+          color="primary"
           onClick={handleRetry}
         >
           返回

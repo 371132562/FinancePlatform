@@ -4,39 +4,36 @@ import { FC, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 import { SystemRoleNames } from '@/config/roleNames'
+import { useAuthStore } from '@/stores/authStore'
+import { useNotificationStore } from '@/stores/notificationStore'
+import { useScheduleStore } from '@/stores/scheduleStore'
 import { useUserStore } from '@/stores/userStore'
-import { useWorkTaskStore } from '@/stores/workTaskStore'
-import type { WorkTaskItem, WorkTaskList } from '@/types'
+import type { ScheduleList } from '@/types'
+import { getScheduleStatusOptions, ScheduleItem } from '@/types'
+import { dayjs } from '@/utils/dayjs'
 
 const { Option } = Select
 const { TextArea } = Input
 const { Search } = Input
 
 // 状态选项
-const statusOptions = [
-  { value: '', label: '全部状态' },
-  { value: '未完成', label: '未完成' },
-  { value: '进行中', label: '进行中' },
-  { value: '有风险', label: '有风险' },
-  { value: '已完成', label: '已完成' },
-  { value: '已停止', label: '已停止' }
-]
+const statusOptions = [{ value: '', label: '全部状态' }, ...getScheduleStatusOptions()]
 
-// 状态颜色映射
-const statusColorMap: Record<string, string> = {
-  未完成: 'default',
-  进行中: 'processing',
-  有风险: 'warning',
-  已完成: 'success',
-  已停止: 'error'
-}
-
-const WorkTaskList: FC = () => {
+const ScheduleList: FC = () => {
   const navigate = useNavigate()
-  const { taskList, loading, fetchTaskList, createTask } = useWorkTaskStore()
-  const { userList, fetchUserList } = useUserStore()
+  const scheduleList = useScheduleStore(state => state.scheduleList)
+  const loading = useScheduleStore(state => state.loading)
+  const fetchScheduleList = useScheduleStore(state => state.fetchScheduleList)
+  const createSchedule = useScheduleStore(state => state.createSchedule)
+  const updateScheduleStatus = useScheduleStore(state => state.updateScheduleStatus)
+  const deleteSchedule = useScheduleStore(state => state.deleteSchedule)
 
-  const [searchParams, setSearchParams] = useState<WorkTaskList>({
+  const userList = useUserStore(state => state.userList)
+  const fetchUserList = useUserStore(state => state.fetchUserList)
+  const user = useAuthStore(state => state.user)
+  const fetchUnreadNotifications = useNotificationStore(state => state.fetchUnreadNotifications)
+
+  const [searchParams, setSearchParams] = useState<ScheduleList>({
     page: 1,
     pageSize: 10,
     status: '',
@@ -46,47 +43,69 @@ const WorkTaskList: FC = () => {
   const [createModalVisible, setCreateModalVisible] = useState(false)
   const [form] = Form.useForm()
 
+  // 检查是否有删除权限
+  const canDelete =
+    user?.role?.name === SystemRoleNames.ADMIN || user?.role?.name === SystemRoleNames.BOSS
+
   useEffect(() => {
-    fetchTaskList(searchParams)
+    fetchScheduleList(searchParams)
     fetchUserList()
-  }, [fetchTaskList, fetchUserList])
+  }, [])
 
   const handleSearch = (value: string) => {
     setSearchParams(prev => ({ ...prev, keyword: value, page: 1 }))
-    fetchTaskList({ ...searchParams, keyword: value, page: 1 })
+    fetchScheduleList({ ...searchParams, keyword: value, page: 1 })
   }
 
   const handleStatusChange = (value: string) => {
     setSearchParams(prev => ({ ...prev, status: value, page: 1 }))
-    fetchTaskList({ ...searchParams, status: value, page: 1 })
+    fetchScheduleList({ ...searchParams, status: value, page: 1 })
   }
 
   const handleCreateTask = async () => {
     try {
       const values = await form.validateFields()
-      const success = await createTask(values)
+      const success = await createSchedule(values)
       if (success) {
-        message.success('工作项创建成功')
+        message.success('日程创建成功')
         setCreateModalVisible(false)
         form.resetFields()
-        fetchTaskList(searchParams)
+        fetchScheduleList(searchParams)
       }
     } catch (error) {
       console.error('表单验证失败:', error)
     }
   }
 
+  const handleStatusUpdate = async (taskId: string, newStatus: string) => {
+    const success = await updateScheduleStatus({ id: taskId, status: newStatus })
+    if (success) {
+      message.success('状态更新成功')
+      fetchScheduleList(searchParams)
+    }
+  }
+
+  const handleDeleteTask = async (taskId: string) => {
+    const success = await deleteSchedule(taskId)
+    if (success) {
+      message.success('日程删除成功')
+      fetchScheduleList(searchParams)
+      // 刷新未读通知（因为相关通知可能被删除）
+      fetchUnreadNotifications()
+    }
+  }
+
   const columns = [
     {
-      title: '工作标题',
+      title: '日程标题',
       dataIndex: 'title',
       key: 'title',
       ellipsis: true,
-      render: (text: string, record: WorkTaskItem) => (
+      render: (text: string, record: ScheduleItem) => (
         <Button
-          type="link"
-          onClick={() => navigate(`/work/detail/${record.id}`)}
-          style={{ padding: 0, height: 'auto' }}
+          variant="link"
+          color="primary"
+          onClick={() => navigate(`/schedule/detail/${record.id}`)}
         >
           {text}
         </Button>
@@ -96,22 +115,48 @@ const WorkTaskList: FC = () => {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      width: 100,
-      render: (status: string) => <Tag color={statusColorMap[status] || 'default'}>{status}</Tag>
+      width: 150,
+      render: (status: string, record: ScheduleItem) => (
+        <Select
+          value={status}
+          style={{ width: 120 }}
+          onChange={value => {
+            if (value !== status) {
+              // 使用Popconfirm进行二次确认
+              Modal.confirm({
+                title: '确认修改状态',
+                content: `确定要将状态从"${status}"修改为"${value}"吗？`,
+                okText: '确认',
+                cancelText: '取消',
+                onOk: () => handleStatusUpdate(record.id, value)
+              })
+            }
+          }}
+        >
+          {statusOptions.slice(1).map(option => (
+            <Option
+              key={option.value}
+              value={option.value}
+            >
+              {option.label}
+            </Option>
+          ))}
+        </Select>
+      )
     },
     {
       title: '创建人',
       dataIndex: 'creator',
       key: 'creator',
       width: 120,
-      render: (creator: WorkTaskItem['creator']) => creator?.name || '-'
+      render: (creator: ScheduleItem['creator']) => creator?.name || '-'
     },
     {
       title: '执行人员',
       dataIndex: 'assignedUsers',
       key: 'assignedUsers',
       width: 200,
-      render: (assignedUsers: WorkTaskItem['assignedUsers']) => (
+      render: (assignedUsers: ScheduleItem['assignedUsers']) => (
         <div>
           {assignedUsers?.slice(0, 2).map(user => (
             <Tag key={user.id}>{user.name}</Tag>
@@ -125,8 +170,38 @@ const WorkTaskList: FC = () => {
       dataIndex: 'createTime',
       key: 'createTime',
       width: 150,
-      render: (time: Date) => new Date(time).toLocaleString()
-    }
+      render: (time: Date) => dayjs(time).format('YYYY年MM月DD日 HH:mm:ss')
+    },
+    // 只有有权限的用户才显示操作列
+    ...(canDelete
+      ? [
+          {
+            title: '操作',
+            key: 'action',
+            width: 100,
+            render: (record: ScheduleItem) => {
+              return (
+                <Button
+                  variant="outlined"
+                  danger
+                  onClick={() => {
+                    Modal.confirm({
+                      title: '确认删除',
+                      content: '删除日程后，相关通知也会被删除，此操作不可恢复，确定要删除吗？',
+                      okText: '确定',
+                      cancelText: '取消',
+                      okButtonProps: { danger: true },
+                      onOk: () => handleDeleteTask(record.id)
+                    })
+                  }}
+                >
+                  删除
+                </Button>
+              )
+            }
+          }
+        ]
+      : [])
   ]
 
   return (
@@ -135,7 +210,7 @@ const WorkTaskList: FC = () => {
       <div className="mb-4 flex justify-between">
         <div className="flex items-center space-x-4">
           <Search
-            placeholder="搜索工作标题或描述"
+            placeholder="搜索日程标题或描述"
             onSearch={handleSearch}
             style={{ width: 200 }}
             allowClear
@@ -158,11 +233,12 @@ const WorkTaskList: FC = () => {
           </Select>
         </div>
         <Button
-          type="primary"
+          variant="outlined"
+          color="primary"
           icon={<PlusOutlined />}
           onClick={() => setCreateModalVisible(true)}
         >
-          新建工作
+          新建日程
         </Button>
       </div>
 
@@ -170,11 +246,11 @@ const WorkTaskList: FC = () => {
         <Table
           rowKey="id"
           columns={columns}
-          dataSource={taskList}
+          dataSource={scheduleList}
           pagination={{
             current: searchParams.page,
             pageSize: searchParams.pageSize,
-            total: taskList.length,
+            total: scheduleList.length,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: total => `共 ${total} 条记录`,
@@ -185,9 +261,9 @@ const WorkTaskList: FC = () => {
         />
       </Spin>
 
-      {/* 创建工作项弹窗 */}
+      {/* 创建日程弹窗 */}
       <Modal
-        title="新建工作项"
+        title="新建日程"
         open={createModalVisible}
         onCancel={() => {
           setCreateModalVisible(false)
@@ -205,7 +281,8 @@ const WorkTaskList: FC = () => {
           </Button>,
           <Button
             key="create"
-            type="primary"
+            variant="outlined"
+            color="primary"
             onClick={handleCreateTask}
           >
             创建
@@ -220,22 +297,22 @@ const WorkTaskList: FC = () => {
         >
           <Form.Item
             name="title"
-            label="工作标题"
-            rules={[{ required: true, message: '请输入工作标题' }]}
+            label="日程标题"
+            rules={[{ required: true, message: '请输入日程标题' }]}
           >
             <Input
-              placeholder="请输入工作标题"
+              placeholder="请输入日程标题"
               maxLength={100}
             />
           </Form.Item>
 
           <Form.Item
             name="description"
-            label="工作描述"
-            rules={[{ required: true, message: '请输入工作描述' }]}
+            label="日程描述"
+            rules={[{ required: true, message: '请输入日程描述' }]}
           >
             <TextArea
-              placeholder="请输入工作描述"
+              placeholder="请输入日程描述"
               rows={4}
               maxLength={500}
             />
@@ -273,4 +350,4 @@ const WorkTaskList: FC = () => {
   )
 }
 
-export default WorkTaskList
+export default ScheduleList

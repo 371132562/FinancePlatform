@@ -182,7 +182,8 @@ const LoginPage: React.FC = () => {
                   {/* 登录按钮 */}
                   <Form.Item className="mb-0">
                     <Button
-                      type="primary"
+                      variant="outlined"
+                      color="primary"
                       htmlType="submit"
                       loading={submitting}
                       className="!h-12 w-full rounded-md !bg-gradient-to-r !from-blue-600 !to-cyan-600 text-base font-medium text-white !transition-colors !duration-200 hover:from-blue-700 hover:to-cyan-700"

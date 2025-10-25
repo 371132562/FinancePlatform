@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../../../prisma/prisma.service';
+import { NotificationModule, NotificationType } from '../../../types/dto';
 import { ErrorCode } from '../../../types/response';
+import { SystemRoleNames } from '../../common/config/roleNames';
 import { BusinessException } from '../../common/exceptions/businessException';
 import { WinstonLoggerService } from '../../common/services/winston-logger.service';
 import {
@@ -19,32 +21,34 @@ export class NotificationService {
   ) {}
 
   /**
-   * 创建工作派发通知
-   * @param taskId 工作项ID
+   * 创建日程分配通知
+   * @param taskId 日程ID
    * @param creatorId 创建者ID
    * @param assignedUserIds 执行人员ID列表
-   * @param isUpdate 是否为更新操作（默认为false，表示创建）
+   * @param operationType 操作类型：'create' | 'update' | 'comment'
+   * @param operatorId 操作者ID（仅在更新或回复操作时使用）
    */
-  async createTaskAssignNotification(
+  async createScheduleAssignNotification(
     taskId: string,
     creatorId: string,
     assignedUserIds: string[],
-    isUpdate: boolean = false,
+    operationType: 'create' | 'update' | 'comment' = 'create',
+    operatorId?: string,
   ) {
     this.logger.log(
-      `[操作] 创建工作派发通知 - 工作项ID: ${taskId}, 关联用户: ${assignedUserIds.length}个, 是否更新: ${isUpdate}`,
+      `[操作] 创建日程分配通知 - 日程ID: ${taskId}, 关联用户: ${assignedUserIds.length}个, 操作类型: ${operationType}`,
     );
 
     try {
-      // 获取工作项信息
-      const task = await this.prisma.workTask.findUnique({
+      // 获取日程信息
+      const task = await this.prisma.schedule.findUnique({
         where: { id: taskId },
         select: { title: true },
       });
 
       if (!task) {
         this.logger.warn(
-          `[验证失败] 创建工作派发通知 - 工作项ID ${taskId} 不存在`,
+          `[验证失败] 创建日程分配通知 - 日程ID ${taskId} 不存在`,
         );
         return;
       }
@@ -59,32 +63,98 @@ export class NotificationService {
         relatedId: string;
       }> = [];
 
-      // 为执行人员创建通知
+      // 根据操作类型确定通知标题、内容和类型
+      let title: string;
+      let content: string;
+      let notificationType: NotificationType;
+
+      switch (operationType) {
+        case 'update':
+          title = '日程状态更新';
+          content = `日程"${task.title}"状态已更新`;
+          notificationType = NotificationType.STATUS_UPDATE;
+          break;
+        case 'comment':
+          title = '日程有新回复';
+          content = `日程"${task.title}"有新的回复`;
+          notificationType = NotificationType.NEW_REPLY;
+          break;
+        case 'create':
+        default:
+          title = '新的日程任务';
+          content = `您有新的日程：${task.title}`;
+          notificationType = NotificationType.ASSIGNED;
+          break;
+      }
+
+      // 1. 准备需要查询的用户ID列表
+      const excludeUserId =
+        operationType === 'create' ? creatorId : operatorId || creatorId;
+
+      const userIdsToQuery: string[] = [];
+
+      // 执行人员列表（排除操作者）
       for (const userId of assignedUserIds) {
-        if (userId !== creatorId) {
+        if (userId !== excludeUserId) {
+          userIdsToQuery.push(userId);
+        }
+      }
+
+      // 创建者（仅更新操作且特定条件下）
+      const shouldNotifyCreator =
+        operationType === 'update' &&
+        !assignedUserIds.includes(creatorId) &&
+        creatorId !== operatorId;
+
+      if (shouldNotifyCreator) {
+        userIdsToQuery.push(creatorId);
+      }
+
+      // 2. 批量查询用户角色
+      const users = await this.prisma.user.findMany({
+        where: { id: { in: userIdsToQuery } },
+        select: { id: true, role: { select: { name: true } } },
+      });
+
+      // 3. 构建用户角色映射
+      const userRoleMap = new Map(users.map((u) => [u.id, u.role?.name]));
+
+      // 4. 为执行人员创建通知（排除系统管理员）
+      for (const userId of assignedUserIds) {
+        if (userId !== excludeUserId) {
+          const userRole = userRoleMap.get(userId);
+
+          // 跳过系统管理员
+          if (userRole === SystemRoleNames.ADMIN) {
+            continue;
+          }
+
           notifications.push({
             userId,
-            module: 'work',
-            type: 'assigned',
-            title: isUpdate ? '工作任务更新' : '新的工作任务',
-            content: isUpdate
-              ? `您的工作任务有更新：${task.title}`
-              : `您有新的工作任务：${task.title}`,
+            module: NotificationModule.SCHEDULE,
+            type: notificationType,
+            title,
+            content,
             relatedId: taskId,
           });
         }
       }
 
-      // 如果是更新操作，且创建者不在执行人员列表中，给创建者发送通知
-      if (isUpdate && !assignedUserIds.includes(creatorId)) {
-        notifications.push({
-          userId: creatorId,
-          module: 'work',
-          type: 'assigned',
-          title: '工作项更新通知',
-          content: `您的工作项已更新：${task.title}`,
-          relatedId: taskId,
-        });
+      // 5. 为创建者创建通知（排除系统管理员）
+      if (shouldNotifyCreator) {
+        const creatorRole = userRoleMap.get(creatorId);
+
+        // 跳过系统管理员
+        if (creatorRole !== SystemRoleNames.ADMIN) {
+          notifications.push({
+            userId: creatorId,
+            module: NotificationModule.SCHEDULE,
+            type: NotificationType.STATUS_UPDATE,
+            title: '日程更新通知',
+            content: `您的日程已更新：${task.title}`,
+            relatedId: taskId,
+          });
+        }
       }
 
       if (notifications.length > 0) {
@@ -93,12 +163,12 @@ export class NotificationService {
         });
 
         this.logger.log(
-          `[操作] 创建工作派发通知成功 - 共创建 ${notifications.length} 条通知`,
+          `[操作] 创建日程分配通知成功 - 共创建 ${notifications.length} 条通知`,
         );
       }
     } catch (error) {
       this.logger.error(
-        `[失败] 创建工作派发通知 - ${error instanceof Error ? error.message : '未知错误'}`,
+        `[失败] 创建日程分配通知 - ${error instanceof Error ? error.message : '未知错误'}`,
         error instanceof Error ? error.stack : undefined,
       );
       throw error;

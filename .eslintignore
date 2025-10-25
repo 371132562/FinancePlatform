@@ -1,0 +1,6 @@
+# 忽略第三方库文件
+frontend/src/assets/iconfont/iconfont.js
+frontend/src/assets/iconfont/iconfont.css
+node_modules/
+dist/
+build/

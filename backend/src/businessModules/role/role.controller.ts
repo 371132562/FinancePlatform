@@ -29,7 +29,8 @@ export class RoleController {
   @Post('create')
   async createRole(
     @Body() createRoleDto: CreateRoleDto,
-    @Body('name', RoleNameExistsValidationPipe) _name: string,
+
+    @Body('name', RoleNameExistsValidationPipe) _: string,
   ) {
     return this.roleService.createRole(createRoleDto);
   }

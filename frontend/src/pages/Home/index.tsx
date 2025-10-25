@@ -39,7 +39,8 @@ const Component = () => {
           description="首页暂无内容"
         >
           <Button
-            type="primary"
+            variant="outlined"
+            color="primary"
             onClick={goToConfig}
           >
             前往配置

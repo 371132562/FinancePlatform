@@ -23,7 +23,7 @@ const ArticleManagement: React.FC = () => {
 
   useEffect(() => {
     getArticleList(1, 10, '')
-  }, [getArticleList])
+  }, [])
 
   const handleSearch = (value: string) => {
     setSearchTitle(value)

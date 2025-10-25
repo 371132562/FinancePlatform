@@ -3,7 +3,7 @@ CREATE TABLE "WorkTask" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "status" TEXT NOT NULL DEFAULT '未完成',
+    "status" TEXT NOT NULL DEFAULT '待完成',
     "creatorId" TEXT NOT NULL,
     "assignedUserIds" JSONB NOT NULL DEFAULT [],
     "companyId" TEXT,

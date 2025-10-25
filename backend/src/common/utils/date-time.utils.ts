@@ -74,5 +74,14 @@ export const formatYear = (year: number): string => {
   return `${year}年`;
 };
 
+/**
+ * 格式化日期时间为中文格式
+ * @param date 日期对象或字符串
+ * @returns 格式化后的日期时间字符串（例：2024年10月25日 15:30:32）
+ */
+export const formatDateTime = (date: Date | string): string => {
+  return dayjs.tz(date, 'Asia/Shanghai').format('YYYY年MM月DD日 HH:mm:ss');
+};
+
 // 导出配置好的 dayjs 实例，供上游调用（下游：无副作用）
 export default dayjs;

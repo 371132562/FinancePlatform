@@ -14,6 +14,8 @@ import {
 } from 'antd'
 import React, { useEffect, useState } from 'react'
 
+import ChangePasswordModal from '@/components/ChangePasswordModal'
+
 import { useRoleStore } from '../../../stores/roleStore'
 import { useUserStore } from '../../../stores/userStore'
 import { UserItem } from '../../../types'
@@ -25,7 +27,6 @@ const UserManagement: React.FC = () => {
   const createUser = useUserStore(s => s.createUser)
   const updateUser = useUserStore(s => s.updateUser)
   const deleteUser = useUserStore(s => s.deleteUser)
-  const resetUserPassword = useUserStore(s => s.resetUserPassword)
 
   const roleList = useRoleStore(s => s.roleList)
   const fetchRoleList = useRoleStore(s => s.fetchRoleList)
@@ -33,14 +34,13 @@ const UserManagement: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false)
   const [editUser, setEditUser] = useState<UserItem | null>(null)
   const [form] = Form.useForm()
-  const [resetModalOpen, setResetModalOpen] = useState(false)
-  const [resetUser, setResetUser] = useState<UserItem | null>(null)
-  const [resetForm] = Form.useForm()
+  const [changePasswordModalOpen, setChangePasswordModalOpen] = useState(false)
+  const [changePasswordUser, setChangePasswordUser] = useState<UserItem | null>(null)
 
   useEffect(() => {
     fetchUserList()
     fetchRoleList()
-  }, [fetchUserList, fetchRoleList])
+  }, [])
 
   // 打开新建/编辑弹窗
   const openModal = (user?: UserItem) => {
@@ -73,26 +73,10 @@ const UserManagement: React.FC = () => {
     }
   }
 
-  // 打开重置密码弹窗
-  const openResetModal = (user: UserItem) => {
-    setResetUser(user)
-    setResetModalOpen(true)
-    resetForm.resetFields()
-  }
-
-  // 提交重置密码
-  const handleResetOk = async () => {
-    const values = await resetForm.validateFields()
-    if (resetUser) {
-      const success = await resetUserPassword({
-        id: String(resetUser.id),
-        newPassword: values.newPassword
-      })
-      if (success) {
-        message.success('密码重置成功')
-        setResetModalOpen(false)
-      }
-    }
+  // 打开修改密码弹窗
+  const openChangePasswordModal = (user: UserItem) => {
+    setChangePasswordUser(user)
+    setChangePasswordModalOpen(true)
   }
 
   const columns = [
@@ -121,9 +105,9 @@ const UserManagement: React.FC = () => {
           <Button
             color="primary"
             variant="outlined"
-            onClick={() => openResetModal(record)}
+            onClick={() => openChangePasswordModal(record)}
           >
-            重置密码
+            修改密码
           </Button>
           <Button
             onClick={() => openModal(record)}
@@ -153,6 +137,7 @@ const UserManagement: React.FC = () => {
             cancelText="取消"
           >
             <Button
+              variant="outlined"
               danger
               disabled={record.code === '88888888'}
             >
@@ -169,7 +154,8 @@ const UserManagement: React.FC = () => {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-bold"></h2>
         <Button
-          type="primary"
+          variant="outlined"
+          color="primary"
           icon={<PlusOutlined />}
           onClick={() => openModal()}
         >
@@ -298,30 +284,17 @@ const UserManagement: React.FC = () => {
           )}
         </Form>
       </Modal>
-      {/* 重置密码弹窗 */}
-      <Modal
-        title="重置用户密码"
-        open={resetModalOpen}
-        onOk={handleResetOk}
-        onCancel={() => setResetModalOpen(false)}
-        destroyOnHidden
-      >
-        <Form
-          form={resetForm}
-          layout="vertical"
-        >
-          <Form.Item
-            name="newPassword"
-            label="新密码"
-            rules={[{ required: true, message: '请输入新密码' }]}
-          >
-            <Input.Password
-              maxLength={32}
-              placeholder="请输入新密码"
-            />
-          </Form.Item>
-        </Form>
-      </Modal>
+      {/* 修改密码弹窗 */}
+      <ChangePasswordModal
+        open={changePasswordModalOpen}
+        onCancel={() => setChangePasswordModalOpen(false)}
+        onSuccess={() => {
+          // 密码修改成功后可以刷新用户列表
+          fetchUserList()
+        }}
+        userId={changePasswordUser?.id}
+        title={`修改用户 ${changePasswordUser?.name} 的密码`}
+      />
     </div>
   )
 }

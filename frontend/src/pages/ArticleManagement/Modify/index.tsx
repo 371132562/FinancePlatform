@@ -162,7 +162,8 @@ const ArticleModify: FC = () => {
           <Button onClick={() => navigate('/article/list')}>返回</Button>
           <Button onClick={handlePreview}>预览</Button>
           <Button
-            type="primary"
+            variant="outlined"
+            color="primary"
             htmlType="submit"
             loading={submitLoading}
             form="articleForm" // 关联到下面的 Form

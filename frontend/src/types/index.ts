@@ -1,5 +1,5 @@
 import { LazyExoticComponent, ReactNode } from 'react'
-import type {
+import {
   // 文章管理相关类型
   ArticleItem,
   ArticleListResponse,
@@ -11,18 +11,19 @@ import type {
   CreateArticle,
   CreateComment,
   CreateRole,
+  CreateSchedule,
   // 用户管理相关类型
   CreateUserEncrypted,
-  CreateWorkTask,
   DeleteArticle,
-  DeleteComment,
   DeleteNotification,
   // 上传相关类型
   DeleteOrphans,
   DeleteRole,
+  DeleteSchedule,
   DeleteUser,
-  DeleteWorkTask,
   ExportFormat,
+  getNotificationTypeOptions,
+  getScheduleStatusOptions,
   // 系统日志相关类型
   LogFileLevel,
   Login,
@@ -34,6 +35,10 @@ import type {
   NotificationItem,
   NotificationList,
   NotificationListResDto,
+  NotificationModule,
+  // 通知相关类型
+  NotificationType,
+  NotificationTypeOption,
   OrphanImagesResponse,
   PaginatedResponse,
   ReadLog,
@@ -41,24 +46,26 @@ import type {
   ResetUserPasswordEncrypted,
   RoleListItemDto,
   RoleListResDto,
+  ScheduleDetail,
+  ScheduleDetailResDto,
+  // 日程相关类型
+  ScheduleItem,
+  ScheduleList,
+  ScheduleListResDto,
+  // 日程状态相关类型
+  ScheduleStatus,
+  ScheduleStatusOption,
   SystemLogFilesResDto,
   TokenPayloadDto,
-  UnreadCountDto,
   UpdateArticle,
   UpdateRole,
+  UpdateScheduleStatus,
   UpdateUser,
-  UpdateWorkTask,
   UploadResponse,
   UserItem,
   UserListResDto,
   UserLogFilesReq,
-  UserProfileDto,
-  WorkTaskDetail,
-  WorkTaskDetailResDto,
-  // 工作项相关类型
-  WorkTaskItem,
-  WorkTaskList,
-  WorkTaskListResDto
+  UserProfileDto
 } from 'template-backend/types/dto'
 
 /**
@@ -133,20 +140,27 @@ export type {
 // 上传相关类型
 export type { DeleteOrphans, OrphanImagesResponse, UploadResponse }
 
-// 工作项相关类型
+// 日程相关类型
 export type {
   CommentItem,
   CreateComment,
-  CreateWorkTask,
-  DeleteComment,
-  DeleteWorkTask,
-  UpdateWorkTask,
-  WorkTaskDetail,
-  WorkTaskDetailResDto,
-  WorkTaskItem,
-  WorkTaskList,
-  WorkTaskListResDto
+  CreateSchedule,
+  DeleteSchedule,
+  ScheduleDetail,
+  ScheduleDetailResDto,
+  ScheduleItem,
+  ScheduleList,
+  ScheduleListResDto,
+  UpdateScheduleStatus
 }
+
+// 日程状态相关类型
+export type { ScheduleStatus, ScheduleStatusOption }
+export { getScheduleStatusOptions }
+
+// 通知相关类型
+export type { NotificationModule, NotificationType, NotificationTypeOption }
+export { getNotificationTypeOptions }
 
 // 通知相关类型
 export type {
@@ -154,6 +168,5 @@ export type {
   MarkRead,
   NotificationItem,
   NotificationList,
-  NotificationListResDto,
-  UnreadCountDto
+  NotificationListResDto
 }

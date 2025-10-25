@@ -1,4 +1,4 @@
-import { LoginOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons' // 导入图标
+import { KeyOutlined, LoginOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons' // 导入图标
 import {
   Avatar,
   Badge,
@@ -15,6 +15,7 @@ import { FC, ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { Link, useLocation, useNavigate, useOutlet } from 'react-router'
 
+import ChangePasswordModal from '@/components/ChangePasswordModal'
 import ErrorPage from '@/components/Error'
 import Forbidden from '@/components/Forbidden'
 import { isFullPermissionRole } from '@/config/roleNames'
@@ -26,6 +27,7 @@ import {
 } from '@/router/routesConfig'
 import { useAuthStore } from '@/stores/authStore'
 import { useNotificationStore } from '@/stores/notificationStore'
+import { dayjs } from '@/utils/dayjs'
 
 const { Header, Sider, Content /* Footer */ } = Layout
 
@@ -44,18 +46,17 @@ export const Component: FC = () => {
   const logout = useAuthStore(state => state.logout)
   const [collapsed, setCollapsed] = useState(false)
   const [openKeys, setOpenKeys] = useState<string[]>([])
+  const [changePasswordModalOpen, setChangePasswordModalOpen] = useState(false)
   const { pathname } = useLocation()
   const scrollRef = useRef<HTMLDivElement | null>(null)
 
   // 通知相关状态
-  const {
-    unreadCount,
-    unreadNotifications,
-    fetchUnreadNotifications,
-    markAsRead,
-    markAllAsRead,
-    clearNotifications
-  } = useNotificationStore()
+  const unreadCount = useNotificationStore(state => state.unreadCount)
+  const unreadNotifications = useNotificationStore(state => state.unreadNotifications)
+  const fetchUnreadNotifications = useNotificationStore(state => state.fetchUnreadNotifications)
+  const markAsRead = useNotificationStore(state => state.markAsRead)
+  const markAllAsRead = useNotificationStore(state => state.markAllAsRead)
+  const clearNotifications = useNotificationStore(state => state.clearNotifications)
 
   // 主动获取用户信息
   useEffect(() => {
@@ -63,7 +64,7 @@ export const Component: FC = () => {
     if (token) {
       fetchProfile()
     }
-  }, [token, fetchProfile])
+  }, [token])
 
   // 获取未读通知（定时轮询）
   useEffect(() => {
@@ -131,11 +132,10 @@ export const Component: FC = () => {
         }}
       >
         <div className="font-medium">{notification.title}</div>
-        <div className="mt-1 text-gray-600">{notification.content}</div>
         <div className="mt-1 text-gray-400">
-          {new Date(notification.createTime).toLocaleString()}
+          {dayjs(notification.createTime).format('YYYY年MM月DD日 HH:mm:ss')}
         </div>
-        {!notification.isRead && <div className="mt-2 h-2 w-2 rounded-full bg-blue-500"></div>}
+        <div className="mt-1 text-gray-600">{notification.content}</div>
       </div>
     )
   }
@@ -181,11 +181,11 @@ export const Component: FC = () => {
               <div className="border-b px-4 py-3">
                 <div className="flex items-center justify-between">
                   <span className="font-medium">通知消息</span>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center !space-x-2">
                     <Badge count={unreadCount} />
                     {unreadCount > 0 && (
                       <Button
-                        type="link"
+                        variant="outlined"
                         size="small"
                         onClick={e => {
                           e.stopPropagation()
@@ -212,14 +212,6 @@ export const Component: FC = () => {
                         <div className="text-gray-500">
                           还有 {unreadNotifications.length - 3} 条未读通知
                         </div>
-                        <Button
-                          type="link"
-                          size="small"
-                          onClick={() => navigate('/notifications')}
-                          className="mt-1"
-                        >
-                          查看全部
-                        </Button>
                       </div>
                     )}
                   </>
@@ -229,7 +221,7 @@ export const Component: FC = () => {
               </div>
               <div className="border-t px-4 py-2 text-center">
                 <Button
-                  type="link"
+                  variant="outlined"
                   size="small"
                   onClick={() => navigate('/notifications')}
                 >
@@ -239,6 +231,17 @@ export const Component: FC = () => {
             </div>
           ),
           disabled: true
+        },
+        {
+          type: 'divider'
+        },
+        {
+          key: 'changePassword',
+          label: <div className="px-2 py-1 text-blue-600 hover:text-blue-700">修改密码</div>,
+          icon: <KeyOutlined />,
+          onClick: () => {
+            setChangePasswordModalOpen(true)
+          }
         },
         {
           type: 'divider'
@@ -508,6 +511,14 @@ export const Component: FC = () => {
           </Footer> */}
         </Layout>
       </Layout>
+
+      {/* 修改密码弹窗 */}
+      <ChangePasswordModal
+        open={changePasswordModalOpen}
+        onCancel={() => setChangePasswordModalOpen(false)}
+        userId={user?.id}
+        title="修改密码"
+      />
     </Layout>
   )
 }

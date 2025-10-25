@@ -1,10 +1,11 @@
-import { DeleteOutlined } from '@ant-design/icons'
-import { Button, Input, message, Popconfirm, Space, Table, Tag } from 'antd'
+import { Button, Input, message, Popconfirm, Space, Table } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 import { useAuthStore } from '@/stores/authStore'
-import { useNotificationStore } from '@/stores/notificationStore'
+import { getNotificationTypeLabel, useNotificationStore } from '@/stores/notificationStore'
+import type { NotificationType } from '@/types'
+import { formatDateTime } from '@/utils/dayjs'
 
 const { Search } = Input
 
@@ -33,7 +34,7 @@ const NotificationList = () => {
     if (user) {
       fetchNotifications({ page: 1, pageSize: 50 })
     }
-  }, [user, fetchNotifications])
+  }, [user])
 
   // 处理搜索
   const handleSearch = (value: string) => {
@@ -69,8 +70,8 @@ const NotificationList = () => {
   const getNotificationUrl = (notification: { module: string; relatedId?: string | null }) => {
     const { module, relatedId } = notification
     switch (module) {
-      case 'work':
-        return `/work/detail/${relatedId}`
+      case 'schedule':
+        return `/schedule/detail/${relatedId}`
       case 'article':
         return `/article/detail/${relatedId}`
       case 'user':
@@ -112,15 +113,13 @@ const NotificationList = () => {
         title: string,
         record: { isRead: number; id: string; module: string; relatedId?: string | null }
       ) => (
-        <div className="flex items-center gap-2">
-          <span
-            className="cursor-pointer font-medium text-blue-600 hover:text-blue-800 hover:underline"
-            onClick={() => handleTitleClick(record)}
-          >
-            {title}
-          </span>
-          {!record.isRead && <Tag color="blue">未读</Tag>}
-        </div>
+        <Button
+          variant="link"
+          color="primary"
+          onClick={() => handleTitleClick(record)}
+        >
+          {title}
+        </Button>
       )
     },
     {
@@ -153,23 +152,14 @@ const NotificationList = () => {
       dataIndex: 'type',
       key: 'type',
       width: 100,
-      render: (type: string) => {
-        const typeMap: Record<string, { color: string; text: string }> = {
-          assigned: { color: 'blue', text: '任务分配' },
-          updated: { color: 'green', text: '任务更新' },
-          completed: { color: 'success', text: '任务完成' },
-          commented: { color: 'orange', text: '回复' }
-        }
-        const typeInfo = typeMap[type] || { color: 'default', text: type }
-        return <Tag color={typeInfo.color}>{typeInfo.text}</Tag>
-      }
+      render: (type: string) => getNotificationTypeLabel(type as NotificationType)
     },
     {
       title: '创建时间',
       dataIndex: 'createTime',
       key: 'createTime',
       width: 150,
-      render: (time: Date) => new Date(time).toLocaleString()
+      render: (time: Date) => formatDateTime(time)
     },
     {
       title: '操作',
@@ -179,9 +169,8 @@ const NotificationList = () => {
         <Space>
           {!record.isRead && (
             <Button
-              type="link"
-              size="small"
-              pa
+              variant="outlined"
+              color="primary"
               onClick={() => handleMarkAsRead(record.id)}
             >
               标记已读
@@ -195,10 +184,8 @@ const NotificationList = () => {
             cancelText="取消"
           >
             <Button
-              type="link"
-              size="small"
+              variant="outlined"
               danger
-              icon={<DeleteOutlined />}
             >
               删除
             </Button>
@@ -221,7 +208,8 @@ const NotificationList = () => {
         </div>
         {notifications.length > 0 && (
           <Button
-            type="primary"
+            variant="outlined"
+            color="primary"
             onClick={handleMarkAllAsRead}
           >
             全部标记为已读

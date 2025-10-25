@@ -11,6 +11,8 @@ export enum SystemRoleNames {
   ADMIN = '系统管理员',
   /** 公司管理者 - 拥有所有权限 */
   BOSS = '公司管理者',
+  /** 员工 - 拥有员工日程管理和通知消息权限 */
+  EMPLOYEE = '员工',
 }
 
 /**

@@ -1,4 +1,4 @@
-import { DeleteOutlined, MenuOutlined } from '@ant-design/icons'
+import { MenuOutlined } from '@ant-design/icons'
 import {
   closestCenter,
   DndContext,
@@ -88,11 +88,12 @@ const SortableItem: React.FC<SortableItemProps> = ({
         )}
       />
       <Button
-        type="text"
+        variant="outlined"
         danger
-        icon={<DeleteOutlined />}
         onClick={() => onRemove(article.uniqueId)}
-      />
+      >
+        删除
+      </Button>
     </div>
   )
 }
@@ -239,7 +240,8 @@ const OrderConfig = () => {
           </Button>
           <Button
             key="submit"
-            type="primary"
+            variant="outlined"
+            color="primary"
             loading={submitLoading}
             onClick={handleSave}
           >

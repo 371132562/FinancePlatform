@@ -101,7 +101,7 @@ const OrphanImages: FC = () => {
             扫描孤立图片
           </Button>
           <Button
-            type="primary"
+            variant="outlined"
             danger
             disabled={selected.length === 0}
             loading={deleting}

@@ -12,7 +12,8 @@ const Forbidden: React.FC = () => {
         subTitle="抱歉，您没有权限访问该页面。可联系管理员申请账号和权限。"
         extra={
           <Button
-            type="primary"
+            variant="outlined"
+            color="primary"
             onClick={() => navigate('/')}
           >
             返回首页

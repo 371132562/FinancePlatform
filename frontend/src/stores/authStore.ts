@@ -28,7 +28,7 @@ export const useAuthStore = create<AuthStore>()(
       error: null,
       // 登录方法
       async login(data) {
-        set({ loading: true, error: null })
+        set({ loading: true })
         try {
           // 两步登录：先获取加密的随机盐，解密后使用crypto-js加密(盐+密码)，然后提交加密数据
           const challenge = await http.post<string>(challengeApiUrl)
@@ -40,12 +40,12 @@ export const useAuthStore = create<AuthStore>()(
             code: data.code,
             encryptedData
           })
-          set({ token: res.data.token, user: res.data.user, loading: false, error: null })
+          set({ token: res.data.token, user: res.data.user })
           return true
-        } catch (err: unknown) {
-          const errorMsg = err instanceof Error ? err.message : '登录失败'
-          set({ loading: false, error: errorMsg })
+        } catch {
           return false
+        } finally {
+          set({ loading: false })
         }
       },
       // 登出方法
@@ -59,7 +59,7 @@ export const useAuthStore = create<AuthStore>()(
         set({ loading: true })
         try {
           const user = await http.post<UserProfileDto>(profileApiUrl)
-          set({ user: user.data, loading: false, error: null })
+          set({ user: user.data })
         } catch (err: unknown) {
           // 根据后端错误码处理
           const errorCode = (err as { response?: { data?: { code?: string } } })?.response?.data
