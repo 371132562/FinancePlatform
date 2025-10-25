@@ -158,7 +158,7 @@ export const Component: FC = () => {
   return (
     <Layout className="h-screen w-full">
       <Header className="flex items-center !pl-[29px] text-white">
-        <div className="flex-shrink-0 text-xl font-bold text-white">模版平台</div>
+        <div className="flex-shrink-0 text-xl font-bold text-white">青岛盛文财税咨询有限公司</div>
         <div className="flex-grow" />
         <Menu
           theme="dark"

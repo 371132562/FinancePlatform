@@ -114,8 +114,7 @@ const LoginPage: React.FC = () => {
                 <div className="mb-8 flex items-center gap-4">
                   {/* <span className="iconfont icon-chengshi1 flex-shrink-0 !text-4xl text-white"></span> */}
                   <div className="text-3xl font-bold leading-tight">
-                    <div className="mb-2">模版平台</div>
-                    <div>模版平台</div>
+                    <div className="mb-2">青岛盛文财税咨询有限公司</div>
                   </div>
                 </div>
               </div>
@@ -186,7 +185,7 @@ const LoginPage: React.FC = () => {
                       color="primary"
                       htmlType="submit"
                       loading={submitting}
-                      className="!h-12 w-full rounded-md !bg-gradient-to-r !from-blue-600 !to-cyan-600 text-base font-medium text-white !transition-colors !duration-200 hover:from-blue-700 hover:to-cyan-700"
+                      className="!h-12 w-full rounded-md !bg-gradient-to-r !from-blue-600 !to-cyan-600 text-base font-medium !text-white"
                     >
                       {submitting ? '登录中...' : '登录'}
                     </Button>
