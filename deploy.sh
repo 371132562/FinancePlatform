@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# 城镇化项目部署脚本
+# 金融平台项目部署脚本
 # 按顺序执行：git pull -> 安装依赖 -> 前端构建 -> Prisma操作 -> 后端构建 -> pm2 reload
 
-echo "🚀 开始部署城镇化项目..."
+echo "🚀 开始部署金融平台项目..."
 
 # 1. 拉取最新代码
 echo "📥 正在拉取最新代码..."
@@ -70,9 +70,9 @@ rm -f frontend-build.log backend-build.log
 # 4. 检查进程是否存在，不存在则启动，存在则reload
 echo "🔄 正在管理应用进程..."
 cd backend
-if pm2 describe urbanization >/dev/null 2>&1; then
+if pm2 describe financePlatform >/dev/null 2>&1; then
     echo "📱 进程已存在，正在重新加载..."
-    pm2 reload urbanization
+    pm2 reload financePlatform
     if [ $? -ne 0 ]; then
         echo "❌ 应用重新加载失败"
         exit 1
@@ -80,7 +80,7 @@ if pm2 describe urbanization >/dev/null 2>&1; then
     echo "✅ 应用重新加载成功"
 else
     echo "🚀 进程不存在，正在启动新进程..."
-    pm2 start 'node ./dist/src/main.js' --name urbanization
+    pm2 start 'node ./dist/src/main.js' --name financePlatform
     if [ $? -ne 0 ]; then
         echo "❌ 应用启动失败"
         exit 1
