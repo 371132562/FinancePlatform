@@ -26,10 +26,14 @@ const ChangePasswordModal: FC<ChangePasswordModalProps> = ({
   userId,
   title = '修改密码'
 }) => {
-  const [form] = Form.useForm()
-  const [loading, setLoading] = useState(false)
+  // Store 取值
   const { resetUserPassword } = useUserStore()
 
+  // useState
+  const [form] = Form.useForm()
+  const [loading, setLoading] = useState(false)
+
+  // 方法定义
   // 处理表单提交
   const handleSubmit = async () => {
     try {

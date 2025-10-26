@@ -1,5 +1,5 @@
 import { Button, Input, message, Popconfirm, Space, Table } from 'antd'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 import { useAuthStore } from '@/stores/authStore'
@@ -13,8 +13,11 @@ const { Search } = Input
  * 通知列表页面
  */
 const NotificationList = () => {
-  const { user } = useAuthStore()
+  // Router hooks
   const navigate = useNavigate()
+
+  // Store 取值
+  const { user } = useAuthStore()
   const {
     notifications,
     loading,
@@ -24,18 +27,118 @@ const NotificationList = () => {
     deleteNotification
   } = useNotificationStore()
 
+  // useState
   const [searchParams, setSearchParams] = useState({
     page: 1,
     pageSize: 10,
     keyword: ''
   })
 
+  // useEffect
   useEffect(() => {
     if (user) {
       fetchNotifications({ page: 1, pageSize: 50 })
     }
   }, [user])
 
+  // useMemo - 派生变量
+  // 表格列定义
+  const columns = useMemo(
+    () => [
+      {
+        title: '标题 (点击跳转)',
+        dataIndex: 'title',
+        key: 'title',
+        width: 200,
+        render: (
+          title: string,
+          record: { isRead: number; id: string; module: string; relatedId?: string | null }
+        ) => (
+          <Button
+            variant="link"
+            color="primary"
+            onClick={() => handleTitleClick(record)}
+          >
+            {title}
+          </Button>
+        )
+      },
+      {
+        title: '内容',
+        dataIndex: 'content',
+        key: 'content',
+        width: 300,
+        render: (content: string) => (
+          <div
+            className="max-w-xs truncate text-gray-600"
+            title={content}
+          >
+            {content}
+          </div>
+        )
+      },
+      {
+        title: '状态',
+        dataIndex: 'isRead',
+        key: 'isRead',
+        width: 80,
+        render: (isRead: number) => (
+          <span className={isRead ? 'text-gray-600' : 'text-red-500'}>
+            {isRead ? '已读' : '未读'}
+          </span>
+        )
+      },
+      {
+        title: '类型',
+        dataIndex: 'type',
+        key: 'type',
+        width: 100,
+        render: (type: string) => getNotificationTypeLabel(type as NotificationType)
+      },
+      {
+        title: '创建时间',
+        dataIndex: 'createTime',
+        key: 'createTime',
+        width: 150,
+        render: (time: Date) => formatDateTime(time)
+      },
+      {
+        title: '操作',
+        key: 'action',
+        width: 150,
+        render: (record: { isRead: number; id: string }) => (
+          <Space>
+            {!record.isRead && (
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => handleMarkAsRead(record.id)}
+              >
+                标记已读
+              </Button>
+            )}
+            <Popconfirm
+              title="确定要删除这条通知吗？"
+              description="此操作不可恢复，请谨慎操作。"
+              onConfirm={() => handleDeleteNotification(record.id)}
+              okText="确定"
+              cancelText="取消"
+            >
+              <Button
+                variant="outlined"
+                danger
+              >
+                删除
+              </Button>
+            </Popconfirm>
+          </Space>
+        )
+      }
+    ],
+    []
+  )
+
+  // 方法定义
   // 处理搜索
   const handleSearch = (value: string) => {
     setSearchParams(prev => ({ ...prev, keyword: value, page: 1 }))
@@ -101,99 +204,6 @@ const NotificationList = () => {
       }
     }
   }
-
-  // 表格列定义
-  const columns = [
-    {
-      title: '标题 (点击跳转)',
-      dataIndex: 'title',
-      key: 'title',
-      width: 200,
-      render: (
-        title: string,
-        record: { isRead: number; id: string; module: string; relatedId?: string | null }
-      ) => (
-        <Button
-          variant="link"
-          color="primary"
-          onClick={() => handleTitleClick(record)}
-        >
-          {title}
-        </Button>
-      )
-    },
-    {
-      title: '内容',
-      dataIndex: 'content',
-      key: 'content',
-      width: 300,
-      render: (content: string) => (
-        <div
-          className="max-w-xs truncate text-gray-600"
-          title={content}
-        >
-          {content}
-        </div>
-      )
-    },
-    {
-      title: '状态',
-      dataIndex: 'isRead',
-      key: 'isRead',
-      width: 80,
-      render: (isRead: number) => (
-        <span className={isRead ? 'text-gray-600' : 'text-red-500'}>
-          {isRead ? '已读' : '未读'}
-        </span>
-      )
-    },
-    {
-      title: '类型',
-      dataIndex: 'type',
-      key: 'type',
-      width: 100,
-      render: (type: string) => getNotificationTypeLabel(type as NotificationType)
-    },
-    {
-      title: '创建时间',
-      dataIndex: 'createTime',
-      key: 'createTime',
-      width: 150,
-      render: (time: Date) => formatDateTime(time)
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 150,
-      render: (record: { isRead: number; id: string }) => (
-        <Space>
-          {!record.isRead && (
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={() => handleMarkAsRead(record.id)}
-            >
-              标记已读
-            </Button>
-          )}
-          <Popconfirm
-            title="确定要删除这条通知吗？"
-            description="此操作不可恢复，请谨慎操作。"
-            onConfirm={() => handleDeleteNotification(record.id)}
-            okText="确定"
-            cancelText="取消"
-          >
-            <Button
-              variant="outlined"
-              danger
-            >
-              删除
-            </Button>
-          </Popconfirm>
-        </Space>
-      )
-    }
-  ]
 
   return (
     <div className="w-full max-w-7xl">

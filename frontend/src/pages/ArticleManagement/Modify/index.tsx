@@ -15,21 +15,11 @@ import type { CreateArticle, UpdateArticle } from '../../../types'
  * @description: 该组件通过 URL 是否包含 ID 来区分是“新增”还是“编辑”模式，并复用同一套表单。
  */
 const ArticleModify: FC = () => {
-  // 从 URL 中获取文章 ID，用于判断是新建还是编辑模式
+  // Router hooks
   const { id } = useParams<{ id: string }>()
-  // 获取路由导航函数，用于页面跳转
   const navigate = useNavigate()
-  // antd 表单实例，用于控制表单行为
-  const [form] = Form.useForm()
-  // 创建一个 Ref 来引用富文本编辑器实例，以便调用其内部方法
-  const editorRef = useRef<RichEditorRef>(null)
 
-  // --- Modal 状态 ---
-  const [isPreviewVisible, setIsPreviewVisible] = useState(false)
-  const [previewContent, setPreviewContent] = useState('')
-
-  // --- 从 Zustand store 中按需获取状态和方法 ---
-  // 这种独立获取的方式可以避免不必要的组件重渲染
+  // Store 取值
   const articleDetail = useArticleStore(state => state.articleDetail)
   const detailLoading = useArticleStore(state => state.detailLoading)
   const submitLoading = useArticleStore(state => state.submitLoading)
@@ -38,9 +28,19 @@ const ArticleModify: FC = () => {
   const createArticle = useArticleStore(state => state.createArticle)
   const updateArticle = useArticleStore(state => state.updateArticle)
 
+  // useState
+  const [form] = Form.useForm()
+  const [isPreviewVisible, setIsPreviewVisible] = useState(false)
+  const [previewContent, setPreviewContent] = useState('')
+
+  // useRef
+  const editorRef = useRef<RichEditorRef>(null)
+
+  // useMemo - 派生变量
   // 判断当前是否为编辑模式（用 useMemo 优化）
   const isEditMode = useMemo(() => !!id, [id])
 
+  // useEffect
   // 1. 处理数据加载和清理
   useEffect(() => {
     // 仅在编辑模式且 id 存在时执行数据获取
@@ -53,7 +53,7 @@ const ArticleModify: FC = () => {
     return () => {
       clearArticleDetail()
     }
-  }, [id, isEditMode]) // 依赖项数组
+  }, [id, isEditMode])
 
   // 2. 当文章详情数据加载成功后，用它来填充表单
   useEffect(() => {
@@ -69,8 +69,9 @@ const ArticleModify: FC = () => {
         })
       }, 0)
     }
-  }, [articleDetail, isEditMode]) // 依赖于详情数据、模式和表单实例
+  }, [articleDetail, isEditMode, form])
 
+  // 方法定义
   /**
    * 处理表单提交（保存）事件
    * @param values - antd Form 自动收集的表单值

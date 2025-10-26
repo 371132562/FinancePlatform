@@ -1,6 +1,6 @@
 import { PlusOutlined } from '@ant-design/icons'
 import { Button, Form, Input, message, Modal, Select, Spin, Table, Tag } from 'antd'
-import { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 import { SystemRoleNames } from '@/config/roleNames'
@@ -20,7 +20,10 @@ const { Search } = Input
 const statusOptions = [{ value: '', label: '全部状态' }, ...getScheduleStatusOptions()]
 
 const ScheduleList: FC = () => {
+  // Router hooks
   const navigate = useNavigate()
+
+  // Store 取值
   const scheduleList = useScheduleStore(state => state.scheduleList)
   const loading = useScheduleStore(state => state.loading)
   const fetchScheduleList = useScheduleStore(state => state.fetchScheduleList)
@@ -33,6 +36,7 @@ const ScheduleList: FC = () => {
   const user = useAuthStore(state => state.user)
   const fetchUnreadNotifications = useNotificationStore(state => state.fetchUnreadNotifications)
 
+  // useState
   const [searchParams, setSearchParams] = useState<ScheduleList>({
     page: 1,
     pageSize: 10,
@@ -43,15 +47,132 @@ const ScheduleList: FC = () => {
   const [createModalVisible, setCreateModalVisible] = useState(false)
   const [form] = Form.useForm()
 
-  // 检查是否有删除权限
-  const canDelete =
-    user?.role?.name === SystemRoleNames.ADMIN || user?.role?.name === SystemRoleNames.BOSS
-
+  // useEffect
   useEffect(() => {
     fetchScheduleList(searchParams)
     fetchUserList()
   }, [])
 
+  // useMemo - 派生变量
+  // 检查是否有删除权限
+  const canDelete = useMemo(
+    () => user?.role?.name === SystemRoleNames.ADMIN || user?.role?.name === SystemRoleNames.BOSS,
+    [user?.role?.name]
+  )
+
+  const columns = useMemo(
+    () => [
+      {
+        title: '日程标题',
+        dataIndex: 'title',
+        key: 'title',
+        ellipsis: true,
+        render: (text: string, record: ScheduleItem) => (
+          <Button
+            variant="link"
+            color="primary"
+            onClick={() => navigate(`/schedule/detail/${record.id}`)}
+          >
+            {text}
+          </Button>
+        )
+      },
+      {
+        title: '状态',
+        dataIndex: 'status',
+        key: 'status',
+        width: 150,
+        render: (status: string, record: ScheduleItem) => (
+          <Select
+            value={status}
+            style={{ width: 120 }}
+            onChange={value => {
+              if (value !== status) {
+                // 使用Popconfirm进行二次确认
+                Modal.confirm({
+                  title: '确认修改状态',
+                  content: `确定要将状态从"${status}"修改为"${value}"吗？`,
+                  okText: '确认',
+                  cancelText: '取消',
+                  onOk: () => handleStatusUpdate(record.id, value)
+                })
+              }
+            }}
+          >
+            {statusOptions.slice(1).map(option => (
+              <Option
+                key={option.value}
+                value={option.value}
+              >
+                {option.label}
+              </Option>
+            ))}
+          </Select>
+        )
+      },
+      {
+        title: '创建人',
+        dataIndex: 'creator',
+        key: 'creator',
+        width: 120,
+        render: (creator: ScheduleItem['creator']) => creator?.name || '-'
+      },
+      {
+        title: '执行人员',
+        dataIndex: 'assignedUsers',
+        key: 'assignedUsers',
+        width: 200,
+        render: (assignedUsers: ScheduleItem['assignedUsers']) => (
+          <div>
+            {assignedUsers?.slice(0, 2).map(user => (
+              <Tag key={user.id}>{user.name}</Tag>
+            ))}
+            {assignedUsers && assignedUsers.length > 2 && <Tag>+{assignedUsers.length - 2}</Tag>}
+          </div>
+        )
+      },
+      {
+        title: '创建时间',
+        dataIndex: 'createTime',
+        key: 'createTime',
+        width: 150,
+        render: (time: Date) => dayjs(time).format('YYYY年MM月DD日 HH:mm:ss')
+      },
+      // 只有有权限的用户才显示操作列
+      ...(canDelete
+        ? [
+            {
+              title: '操作',
+              key: 'action',
+              width: 100,
+              render: (record: ScheduleItem) => {
+                return (
+                  <Button
+                    variant="outlined"
+                    danger
+                    onClick={() => {
+                      Modal.confirm({
+                        title: '确认删除',
+                        content: '删除日程后，相关通知也会被删除，此操作不可恢复，确定要删除吗？',
+                        okText: '确定',
+                        cancelText: '取消',
+                        okButtonProps: { danger: true },
+                        onOk: () => handleDeleteTask(record.id)
+                      })
+                    }}
+                  >
+                    删除
+                  </Button>
+                )
+              }
+            }
+          ]
+        : [])
+    ],
+    [navigate, canDelete]
+  )
+
+  // 方法定义
   const handleSearch = (value: string) => {
     setSearchParams(prev => ({ ...prev, keyword: value, page: 1 }))
     fetchScheduleList({ ...searchParams, keyword: value, page: 1 })
@@ -94,115 +215,6 @@ const ScheduleList: FC = () => {
       fetchUnreadNotifications()
     }
   }
-
-  const columns = [
-    {
-      title: '日程标题',
-      dataIndex: 'title',
-      key: 'title',
-      ellipsis: true,
-      render: (text: string, record: ScheduleItem) => (
-        <Button
-          variant="link"
-          color="primary"
-          onClick={() => navigate(`/schedule/detail/${record.id}`)}
-        >
-          {text}
-        </Button>
-      )
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 150,
-      render: (status: string, record: ScheduleItem) => (
-        <Select
-          value={status}
-          style={{ width: 120 }}
-          onChange={value => {
-            if (value !== status) {
-              // 使用Popconfirm进行二次确认
-              Modal.confirm({
-                title: '确认修改状态',
-                content: `确定要将状态从"${status}"修改为"${value}"吗？`,
-                okText: '确认',
-                cancelText: '取消',
-                onOk: () => handleStatusUpdate(record.id, value)
-              })
-            }
-          }}
-        >
-          {statusOptions.slice(1).map(option => (
-            <Option
-              key={option.value}
-              value={option.value}
-            >
-              {option.label}
-            </Option>
-          ))}
-        </Select>
-      )
-    },
-    {
-      title: '创建人',
-      dataIndex: 'creator',
-      key: 'creator',
-      width: 120,
-      render: (creator: ScheduleItem['creator']) => creator?.name || '-'
-    },
-    {
-      title: '执行人员',
-      dataIndex: 'assignedUsers',
-      key: 'assignedUsers',
-      width: 200,
-      render: (assignedUsers: ScheduleItem['assignedUsers']) => (
-        <div>
-          {assignedUsers?.slice(0, 2).map(user => (
-            <Tag key={user.id}>{user.name}</Tag>
-          ))}
-          {assignedUsers && assignedUsers.length > 2 && <Tag>+{assignedUsers.length - 2}</Tag>}
-        </div>
-      )
-    },
-    {
-      title: '创建时间',
-      dataIndex: 'createTime',
-      key: 'createTime',
-      width: 150,
-      render: (time: Date) => dayjs(time).format('YYYY年MM月DD日 HH:mm:ss')
-    },
-    // 只有有权限的用户才显示操作列
-    ...(canDelete
-      ? [
-          {
-            title: '操作',
-            key: 'action',
-            width: 100,
-            render: (record: ScheduleItem) => {
-              return (
-                <Button
-                  variant="outlined"
-                  danger
-                  onClick={() => {
-                    Modal.confirm({
-                      title: '确认删除',
-                      content: '删除日程后，相关通知也会被删除，此操作不可恢复，确定要删除吗？',
-                      okText: '确定',
-                      cancelText: '取消',
-                      okButtonProps: { danger: true },
-                      onOk: () => handleDeleteTask(record.id)
-                    })
-                  }}
-                >
-                  删除
-                </Button>
-              )
-            }
-          }
-        ]
-      : [])
-  ]
 
   return (
     <div className="w-full max-w-7xl">

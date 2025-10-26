@@ -12,7 +12,7 @@ import {
   Table,
   Tag
 } from 'antd'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
 import ChangePasswordModal from '@/components/ChangePasswordModal'
 
@@ -21,6 +21,7 @@ import { useUserStore } from '../../../stores/userStore'
 import { UserItem } from '../../../types'
 
 const UserManagement: React.FC = () => {
+  // Store 取值
   const userList = useUserStore(s => s.userList)
   const loading = useUserStore(s => s.loading)
   const fetchUserList = useUserStore(s => s.fetchUserList)
@@ -31,17 +32,94 @@ const UserManagement: React.FC = () => {
   const roleList = useRoleStore(s => s.roleList)
   const fetchRoleList = useRoleStore(s => s.fetchRoleList)
 
+  // useState
   const [modalOpen, setModalOpen] = useState(false)
   const [editUser, setEditUser] = useState<UserItem | null>(null)
   const [form] = Form.useForm()
   const [changePasswordModalOpen, setChangePasswordModalOpen] = useState(false)
   const [changePasswordUser, setChangePasswordUser] = useState<UserItem | null>(null)
 
+  // useEffect
   useEffect(() => {
     fetchUserList()
     fetchRoleList()
   }, [])
 
+  // useMemo - 派生变量
+  const columns = useMemo(
+    () => [
+      {
+        title: '用户名',
+        dataIndex: 'code',
+        key: 'code'
+      },
+      { title: '姓名', dataIndex: 'name', key: 'name' },
+      { title: '部门', dataIndex: 'department', key: 'department' },
+      { title: '邮箱', dataIndex: 'email', key: 'email' },
+      { title: '电话', dataIndex: 'phone', key: 'phone' },
+      {
+        title: '角色',
+        key: 'role',
+        render: (_: unknown, record: UserItem) => {
+          const roleName = record.role?.name || '未分配角色'
+          return <Tag>{roleName}</Tag>
+        }
+      },
+      {
+        title: '操作',
+        key: 'action',
+        render: (_: unknown, record: UserItem) => (
+          <Space>
+            <Button
+              color="primary"
+              variant="outlined"
+              onClick={() => openChangePasswordModal(record)}
+            >
+              修改密码
+            </Button>
+            <Button
+              onClick={() => openModal(record)}
+              disabled={record.code === '88888888'}
+            >
+              编辑
+            </Button>
+            <Popconfirm
+              title="确定删除该用户？"
+              description={
+                <span>
+                  此操作不可恢复，请谨慎操作。
+                  <br />
+                  <span style={{ color: '#1890ff', fontWeight: 'bold' }}>
+                    将被删除：用户 {record.name}（{record.code}）
+                  </span>
+                </span>
+              }
+              onConfirm={async () => {
+                const success = await deleteUser({ id: record.id })
+                if (success) {
+                  message.success('用户删除成功')
+                }
+              }}
+              disabled={record.code === '88888888'}
+              okText="确定"
+              cancelText="取消"
+            >
+              <Button
+                variant="outlined"
+                danger
+                disabled={record.code === '88888888'}
+              >
+                删除
+              </Button>
+            </Popconfirm>
+          </Space>
+        )
+      }
+    ],
+    []
+  )
+
+  // 方法定义
   // 打开新建/编辑弹窗
   const openModal = (user?: UserItem) => {
     setEditUser(user || null)
@@ -78,76 +156,6 @@ const UserManagement: React.FC = () => {
     setChangePasswordUser(user)
     setChangePasswordModalOpen(true)
   }
-
-  const columns = [
-    {
-      title: '用户名',
-      dataIndex: 'code',
-      key: 'code'
-    },
-    { title: '姓名', dataIndex: 'name', key: 'name' },
-    { title: '部门', dataIndex: 'department', key: 'department' },
-    { title: '邮箱', dataIndex: 'email', key: 'email' },
-    { title: '电话', dataIndex: 'phone', key: 'phone' },
-    {
-      title: '角色',
-      key: 'role',
-      render: (_: unknown, record: UserItem) => {
-        const roleName = record.role?.name || '未分配角色'
-        return <Tag>{roleName}</Tag>
-      }
-    },
-    {
-      title: '操作',
-      key: 'action',
-      render: (_: unknown, record: UserItem) => (
-        <Space>
-          <Button
-            color="primary"
-            variant="outlined"
-            onClick={() => openChangePasswordModal(record)}
-          >
-            修改密码
-          </Button>
-          <Button
-            onClick={() => openModal(record)}
-            disabled={record.code === '88888888'}
-          >
-            编辑
-          </Button>
-          <Popconfirm
-            title="确定删除该用户？"
-            description={
-              <span>
-                此操作不可恢复，请谨慎操作。
-                <br />
-                <span style={{ color: '#1890ff', fontWeight: 'bold' }}>
-                  将被删除：用户 {record.name}（{record.code}）
-                </span>
-              </span>
-            }
-            onConfirm={async () => {
-              const success = await deleteUser({ id: record.id })
-              if (success) {
-                message.success('用户删除成功')
-              }
-            }}
-            disabled={record.code === '88888888'}
-            okText="确定"
-            cancelText="取消"
-          >
-            <Button
-              variant="outlined"
-              danger
-              disabled={record.code === '88888888'}
-            >
-              删除
-            </Button>
-          </Popconfirm>
-        </Space>
-      )
-    }
-  ]
 
   return (
     <div className="w-full max-w-7xl">

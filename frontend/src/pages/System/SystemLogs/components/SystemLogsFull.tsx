@@ -164,7 +164,7 @@ const SystemLogsFull: React.FC = () => {
       await refreshFilesWithDebounce(true)
     }
     loadFiles()
-  }, [refreshFilesWithDebounce])
+  }, [])
 
   /**
    * 自动查询日志

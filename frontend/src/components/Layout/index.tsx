@@ -18,22 +18,24 @@ import { useAuthStore } from '@/stores/authStore'
 const { Header, Sider, Content /* Footer */ } = Layout
 
 export const Component: FC = () => {
+  // Router hooks
   const outlet = useOutlet()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+
+  // Store 取值
   const user = useAuthStore(state => state.user)
   const token = useAuthStore(state => state.token)
   const fetchProfile = useAuthStore(state => state.fetchProfile)
-  const topRoutes = getTopMenuRoutes()
-  const sideRoutes = getSideMenuRoutes(
-    user?.role && user.role.name
-      ? { name: user.role.name, allowedRoutes: user.role.allowedRoutes || [] }
-      : undefined
-  )
+
+  // useState
   const [collapsed, setCollapsed] = useState(false)
   const [openKeys, setOpenKeys] = useState<string[]>([])
-  const { pathname } = useLocation()
+
+  // useRef
   const scrollRef = useRef<HTMLDivElement | null>(null)
 
+  // useEffect
   // 主动获取用户信息
   useEffect(() => {
     // 有token时，无条件获取用户信息来验证token有效性
@@ -42,79 +44,90 @@ export const Component: FC = () => {
     }
   }, [token])
 
-  const handleMenuClick: MenuProps['onClick'] = e => {
-    navigate(e.key)
-  }
+  // useMemo - 派生变量
+  const topRoutes = useMemo(() => getTopMenuRoutes(), [])
 
-  // 计算顶部导航菜单的激活项
-  const topNavSelectedKey = useMemo(() => {
-    const pathSegments = pathname.split('/').filter(Boolean)
-    if (pathSegments.length === 0) return ['/home']
-    return [`/${pathSegments[0]}`]
-  }, [pathname])
+  const sideRoutes = useMemo(
+    () =>
+      getSideMenuRoutes(
+        user?.role && user.role.name
+          ? { name: user.role.name, allowedRoutes: user.role.allowedRoutes || [] }
+          : undefined
+      ),
+    [user?.role]
+  )
 
-  // 根据当前路径计算应该展开的菜单项
-  const defaultOpenKeys = useMemo(() => {
-    const pathSegments = pathname.split('/').filter(i => i)
-    if (pathSegments.length > 1) {
-      return [`/${pathSegments[0]}`]
-    }
-    return []
-  }, [pathname])
+  // 计算路径相关的状态（合并所有依赖pathname的hooks）
+  const { topNavSelectedKey, sideMenuSelectedKey, defaultOpenKeys, breadcrumbItems, currentRoute } =
+    useMemo(() => {
+      const pathSegments = pathname.split('/').filter(Boolean)
+      const allRoutes = getAllRoutes()
 
-  // 处理菜单展开/收起
-  const handleOpenChange = (keys: string[]) => {
-    setOpenKeys(keys)
-  }
+      // 查找当前路由
+      const currentRoute = allRoutes.find(route => {
+        const routePathPattern = route.path.replace(/\/:[^/]+/g, '/[^/]+')
+        const regex = new RegExp(`^${routePathPattern}$`)
+        return regex.test(pathname)
+      })
 
-  // 当路由变化时，自动展开对应的父菜单
-  useEffect(() => {
-    setOpenKeys(defaultOpenKeys)
-  }, [defaultOpenKeys])
+      // 计算面包屑项
+      const breadcrumbItems = getBreadcrumbItems(pathname).map(item => ({
+        title:
+          item.component && item.path !== pathname ? (
+            <Link to={item.path}>{item.title}</Link>
+          ) : (
+            item.title
+          )
+      }))
+
+      return {
+        topNavSelectedKey: pathSegments.length === 0 ? ['/home'] : [`/${pathSegments[0]}`],
+        defaultOpenKeys: pathSegments.length > 1 ? [`/${pathSegments[0]}`] : [],
+        sideMenuSelectedKey: currentRoute?.menuParent ? [currentRoute.menuParent] : [pathname],
+        breadcrumbItems,
+        currentRoute
+      }
+    }, [pathname])
 
   // 根据路由配置生成顶部菜单项
-  const topMenuItems: MenuProps['items'] = topRoutes.map(route => ({
-    key: route.path,
-    label: route.title,
-    icon: route.icon
-  }))
+  const topMenuItems: MenuProps['items'] = useMemo(
+    () =>
+      topRoutes.map(route => ({
+        key: route.path,
+        label: route.title,
+        icon: route.icon
+      })),
+    [topRoutes]
+  )
 
   // 根据路由配置生成侧边菜单项
-  const menuItems: MenuProps['items'] = sideRoutes.map(route => {
-    const item: {
-      key: string
-      icon?: ReactNode
-      label: ReactNode
-      children?: { key: string; label: ReactNode }[]
-    } = {
-      key: route.path,
-      icon: route.icon,
-      label: route.title
-    }
+  const menuItems: MenuProps['items'] = useMemo(
+    () =>
+      sideRoutes.map(route => {
+        const item: {
+          key: string
+          icon?: ReactNode
+          label: ReactNode
+          children?: { key: string; label: ReactNode }[]
+        } = {
+          key: route.path,
+          icon: route.icon,
+          label: route.title
+        }
 
-    if (route.children && route.children.filter(child => !child.hideInMenu).length > 0) {
-      item.children = route.children
-        .filter(child => !child.hideInMenu)
-        .map(child => ({
-          key: child.path,
-          label: child.title
-        }))
-    }
+        if (route.children && route.children.filter(child => !child.menuParent).length > 0) {
+          item.children = route.children
+            .filter(child => !child.menuParent)
+            .map(child => ({
+              key: child.path,
+              label: child.title
+            }))
+        }
 
-    return item
-  })
-
-  // 获取面包屑项
-  const breadcrumbItems = useMemo(() => {
-    return getBreadcrumbItems(pathname).map(item => ({
-      title:
-        item.component && item.path !== pathname ? (
-          <Link to={item.path}>{item.title}</Link>
-        ) : (
-          item.title
-        )
-    }))
-  }, [pathname])
+        return item
+      }),
+    [sideRoutes]
+  )
 
   // 路由守卫：检查权限
   const hasPermission = useMemo(() => {
@@ -136,16 +149,8 @@ export const Component: FC = () => {
     // 超管和老板可以访问所有侧边栏菜单
     if (isFullPermissionRole(user.role?.name || '')) return true
 
-    // 检查是否为hideInMenu的路由（无条件允许访问）
-    const allRoutes = getAllRoutes()
-    const currentRoute = allRoutes.find(route => {
-      // 处理动态路由参数
-      const routePathPattern = route.path.replace(/\/:[^/]+/g, '/[^/]+')
-      const regex = new RegExp(`^${routePathPattern}$`)
-      return regex.test(pathname)
-    })
-
-    if (currentRoute?.hideInMenu) {
+    // 检查是否为menuParent的路由（无条件允许访问）
+    if (currentRoute?.menuParent) {
       return true
     }
 
@@ -153,7 +158,22 @@ export const Component: FC = () => {
     const allowed = user.role?.allowedRoutes || []
     // 精确匹配或以参数结尾的动态路由
     return allowed.some(route => pathname === route || pathname.startsWith(route + '/'))
-  }, [user, pathname, topRoutes])
+  }, [user, pathname, topRoutes, currentRoute])
+
+  // useEffect - 当路由变化时，自动展开对应的父菜单
+  useEffect(() => {
+    setOpenKeys(defaultOpenKeys)
+  }, [defaultOpenKeys])
+
+  // 方法定义
+  const handleMenuClick: MenuProps['onClick'] = e => {
+    navigate(e.key)
+  }
+
+  // 处理菜单展开/收起
+  const handleOpenChange = (keys: string[]) => {
+    setOpenKeys(keys)
+  }
 
   return (
     <Layout className="h-screen w-full">
@@ -195,7 +215,7 @@ export const Component: FC = () => {
               onClick={handleMenuClick}
               onOpenChange={handleOpenChange}
               // 将菜单的选中状态与路由同步
-              selectedKeys={[pathname]}
+              selectedKeys={sideMenuSelectedKey}
               // 控制菜单展开状态，支持手动操作和路由驱动
               openKeys={openKeys}
               // 设置菜单高度和滚动，确保所有菜单项都能显示

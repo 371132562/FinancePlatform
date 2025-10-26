@@ -119,13 +119,13 @@ const OrderConfig = () => {
 
   useEffect(() => {
     getAllArticles()
-  }, [getAllArticles])
+  }, [])
 
   useEffect(() => {
     if (activePage) {
       getArticlesByPage(activePage)
     }
-  }, [activePage, getArticlesByPage])
+  }, [activePage])
 
   useEffect(() => {
     setSelectedArticles(pageArticles.map(article => ({ ...article, uniqueId: uuidv4() })))

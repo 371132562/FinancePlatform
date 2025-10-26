@@ -21,9 +21,10 @@ interface UserAvatarDropdownProps {
  * 包含用户信息展示、通知消息、修改密码、退出登录等功能
  */
 export const UserAvatarDropdown: FC<UserAvatarDropdownProps> = ({ user, isLoggedIn }) => {
+  // Router hooks
   const navigate = useNavigate()
-  const [changePasswordModalOpen, setChangePasswordModalOpen] = useState(false)
 
+  // Store 取值
   // 认证相关状态和方法
   const logout = useAuthStore(state => state.logout)
   const clearNotifications = useNotificationStore(state => state.clearNotifications)
@@ -35,6 +36,10 @@ export const UserAvatarDropdown: FC<UserAvatarDropdownProps> = ({ user, isLogged
   const markAsRead = useNotificationStore(state => state.markAsRead)
   const markAllAsRead = useNotificationStore(state => state.markAllAsRead)
 
+  // useState
+  const [changePasswordModalOpen, setChangePasswordModalOpen] = useState(false)
+
+  // useEffect
   // 获取未读通知（定时轮询）
   useEffect(() => {
     if (isLoggedIn) {
@@ -47,7 +52,7 @@ export const UserAvatarDropdown: FC<UserAvatarDropdownProps> = ({ user, isLogged
       }, 30000)
       return () => clearInterval(interval)
     }
-  }, [isLoggedIn, fetchUnreadNotifications])
+  }, [isLoggedIn])
 
   // 通知项组件
   const NotificationItem = ({

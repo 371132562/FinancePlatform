@@ -39,7 +39,7 @@ export const routes: RouteItem[] = [
         path: '/article/modify/:id',
         title: '编辑文章',
         component: ModifyArticle,
-        hideInMenu: true,
+        menuParent: '/article/list',
         hideInBreadcrumb: false
       }
     ]
@@ -56,7 +56,7 @@ export const routes: RouteItem[] = [
         path: '/schedule/detail/:id',
         title: '日程详情',
         component: ScheduleDetail,
-        hideInMenu: true
+        menuParent: '/schedule/list'
       }
     ]
   },
@@ -145,7 +145,7 @@ export const getMenuOptionsForRoleEdit = () => {
       const routeOptions: Array<{ label: string; value: string }> = []
       if (route.children) {
         route.children.forEach(child => {
-          if (!child.hideInMenu) {
+          if (!child.menuParent) {
             routeOptions.push({ label: child.title, value: child.path })
           }
         })
@@ -202,6 +202,18 @@ export const getBreadcrumbItems = (
 
     // 如果找到匹配的路由且不在面包屑中隐藏
     if (matchingRoute && matchingRoute.hideInBreadcrumb !== true) {
+      // 如果当前路由有 menuParent，先插入父路由的面包屑项
+      if (matchingRoute.menuParent) {
+        const parentRoute = allRoutes.find(route => route.path === matchingRoute.menuParent)
+        if (parentRoute && !result.some(item => item.path === parentRoute.path)) {
+          result.push({
+            path: parentRoute.path,
+            title: parentRoute.title,
+            component: parentRoute.component
+          })
+        }
+      }
+
       result.push({
         path: currentPath,
         title: matchingRoute.title,

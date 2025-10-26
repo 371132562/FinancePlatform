@@ -12,7 +12,7 @@ import {
   Spin,
   Table
 } from 'antd'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
 import { SystemRoleNames } from '@/config/roleNames'
 
@@ -22,6 +22,7 @@ import { RoleListItemDto } from '../../../types'
 
 // 角色管理页面
 const RoleManagement: React.FC = () => {
+  // Store 取值
   const roleList = useRoleStore(s => s.roleList)
   const loading = useRoleStore(s => s.loading)
   const fetchRoleList = useRoleStore(s => s.fetchRoleList)
@@ -30,6 +31,7 @@ const RoleManagement: React.FC = () => {
   const deleteRole = useRoleStore(s => s.deleteRole)
   const assignRoleRoutes = useRoleStore(s => s.assignRoleRoutes)
 
+  // useState
   const [modalOpen, setModalOpen] = useState(false)
   const [editRole, setEditRole] = useState<RoleListItemDto | null>(null)
   const [form] = Form.useForm()
@@ -37,10 +39,89 @@ const RoleManagement: React.FC = () => {
   const [assignRole, setAssignRole] = useState<RoleListItemDto | null>(null)
   const [assignForm] = Form.useForm()
 
+  // useEffect
   useEffect(() => {
     fetchRoleList()
   }, [])
 
+  // useMemo - 派生变量
+  // 菜单分组选项（父级不可选）
+  const menuOptions = useMemo(() => getMenuOptionsForRoleEdit(), [])
+
+  const columns = useMemo(
+    () => [
+      {
+        title: '角色名称',
+        dataIndex: 'name',
+        key: 'name',
+        render: (v: string) => v
+      },
+      { title: '描述', dataIndex: 'description', key: 'description' },
+      { title: '用户数', dataIndex: 'userCount', key: 'userCount' },
+      {
+        title: '操作',
+        key: 'action',
+        render: (_: unknown, record: RoleListItemDto) => (
+          <Space>
+            <Button
+              color="primary"
+              variant="outlined"
+              onClick={() => openAssignModal(record)}
+              disabled={
+                record.name === SystemRoleNames.ADMIN || record.name === SystemRoleNames.BOSS
+              }
+            >
+              分配权限
+            </Button>
+            <Button
+              onClick={() => openModal(record)}
+              disabled={
+                record.name === SystemRoleNames.ADMIN || record.name === SystemRoleNames.BOSS
+              }
+            >
+              编辑
+            </Button>
+            <Popconfirm
+              title="确定删除该角色？"
+              description={
+                <span>
+                  此操作不可恢复，请谨慎操作。
+                  <br />
+                  <span style={{ color: '#1890ff', fontWeight: 'bold' }}>
+                    将被删除：角色 {record.name}
+                  </span>
+                </span>
+              }
+              onConfirm={async () => {
+                const success = await deleteRole({ id: record.id })
+                if (success) {
+                  message.success('角色删除成功')
+                }
+              }}
+              disabled={
+                record.name === SystemRoleNames.ADMIN || record.name === SystemRoleNames.BOSS
+              }
+              okText="确定"
+              cancelText="取消"
+            >
+              <Button
+                variant="outlined"
+                danger
+                disabled={
+                  record.name === SystemRoleNames.ADMIN || record.name === SystemRoleNames.BOSS
+                }
+              >
+                删除
+              </Button>
+            </Popconfirm>
+          </Space>
+        )
+      }
+    ],
+    []
+  )
+
+  // 方法定义
   // 打开新建/编辑弹窗
   const openModal = (role?: RoleListItemDto) => {
     setEditRole(role || null)
@@ -93,73 +174,6 @@ const RoleManagement: React.FC = () => {
       }
     }
   }
-
-  // 菜单分组选项（父级不可选）
-  const menuOptions = getMenuOptionsForRoleEdit()
-
-  const columns = [
-    {
-      title: '角色名称',
-      dataIndex: 'name',
-      key: 'name',
-      render: (v: string) => v
-    },
-    { title: '描述', dataIndex: 'description', key: 'description' },
-    { title: '用户数', dataIndex: 'userCount', key: 'userCount' },
-    {
-      title: '操作',
-      key: 'action',
-      render: (_: unknown, record: RoleListItemDto) => (
-        <Space>
-          <Button
-            color="primary"
-            variant="outlined"
-            onClick={() => openAssignModal(record)}
-            disabled={record.name === SystemRoleNames.ADMIN || record.name === SystemRoleNames.BOSS}
-          >
-            分配权限
-          </Button>
-          <Button
-            onClick={() => openModal(record)}
-            disabled={record.name === SystemRoleNames.ADMIN || record.name === SystemRoleNames.BOSS}
-          >
-            编辑
-          </Button>
-          <Popconfirm
-            title="确定删除该角色？"
-            description={
-              <span>
-                此操作不可恢复，请谨慎操作。
-                <br />
-                <span style={{ color: '#1890ff', fontWeight: 'bold' }}>
-                  将被删除：角色 {record.name}
-                </span>
-              </span>
-            }
-            onConfirm={async () => {
-              const success = await deleteRole({ id: record.id })
-              if (success) {
-                message.success('角色删除成功')
-              }
-            }}
-            disabled={record.name === SystemRoleNames.ADMIN || record.name === SystemRoleNames.BOSS}
-            okText="确定"
-            cancelText="取消"
-          >
-            <Button
-              variant="outlined"
-              danger
-              disabled={
-                record.name === SystemRoleNames.ADMIN || record.name === SystemRoleNames.BOSS
-              }
-            >
-              删除
-            </Button>
-          </Popconfirm>
-        </Space>
-      )
-    }
-  ]
 
   return (
     <div className="w-full max-w-7xl">
