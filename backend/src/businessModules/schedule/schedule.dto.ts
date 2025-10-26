@@ -153,3 +153,13 @@ export type ScheduleListResDto = ScheduleItem[];
  * 日程详情响应类型
  */
 export type ScheduleDetailResDto = ScheduleDetail;
+
+/**
+ * 日程统计响应类型
+ */
+export type ScheduleStatisticsDto = {
+  pending: number; // 待完成数量
+  inProgress: number; // 进行中数量
+  atRisk: number; // 有风险数量
+};
+export type ScheduleStatistics = ScheduleStatisticsDto;

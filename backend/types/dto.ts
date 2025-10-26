@@ -67,6 +67,7 @@ export type {
   ScheduleItem,
   ScheduleList,
   ScheduleListResDto,
+  ScheduleStatistics,
   UpdateScheduleStatus,
 } from '../src/businessModules/schedule/schedule.dto';
 

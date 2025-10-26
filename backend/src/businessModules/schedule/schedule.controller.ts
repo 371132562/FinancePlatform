@@ -114,4 +114,12 @@ export class ScheduleController {
   ) {
     return await this.scheduleService.createComment(user.userId, dto);
   }
+
+  /**
+   * 获取日程统计数据
+   */
+  @Post('statistics')
+  async getStatistics(@CurrentUser() user: UserPayload) {
+    return await this.scheduleService.getStatistics(user.userId, user.roleName);
+  }
 }

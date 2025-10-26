@@ -18,6 +18,7 @@ import {
   ScheduleDetailResDto,
   ScheduleListDto,
   ScheduleListResDto,
+  ScheduleStatisticsDto,
   UpdateScheduleStatusDto,
 } from './schedule.dto';
 
@@ -564,6 +565,75 @@ export class ScheduleService {
         error instanceof Error ? error.stack : undefined,
       );
       // 不抛出错误，避免影响状态更新主流程
+    }
+  }
+
+  /**
+   * 获取日程统计数据
+   */
+  async getStatistics(
+    userId: string,
+    roleName: string,
+  ): Promise<ScheduleStatisticsDto> {
+    this.logger.log(
+      `[操作] 获取日程统计数据 - 用户: ${userId}, 角色: ${roleName}`,
+    );
+
+    try {
+      // 构建查询条件
+      const where: Record<string, unknown> = { delete: 0 };
+
+      // 根据角色过滤数据
+      if (isFullPermissionRole(roleName)) {
+        // 全权限角色：可以查看所有日程
+      } else {
+        // 受限角色：只能查看与自己关联的日程
+        where.OR = [
+          { creatorId: userId },
+          { assignedUserIds: { path: '$', string_contains: `"${userId}"` } },
+        ];
+      }
+
+      // 查询待完成数量
+      const pendingCount = await this.prisma.schedule.count({
+        where: {
+          ...where,
+          status: '待完成',
+        },
+      });
+
+      // 查询进行中数量
+      const inProgressCount = await this.prisma.schedule.count({
+        where: {
+          ...where,
+          status: '进行中',
+        },
+      });
+
+      // 查询有风险数量
+      const atRiskCount = await this.prisma.schedule.count({
+        where: {
+          ...where,
+          status: '有风险',
+        },
+      });
+
+      const statistics = {
+        pending: pendingCount,
+        inProgress: inProgressCount,
+        atRisk: atRiskCount,
+      };
+
+      this.logger.log(
+        `[操作] 获取日程统计数据成功 - 待完成: ${pendingCount}, 进行中: ${inProgressCount}, 有风险: ${atRiskCount}`,
+      );
+      return statistics;
+    } catch (error) {
+      this.logger.error(
+        `[失败] 获取日程统计数据 - ${error instanceof Error ? error.message : '未知错误'}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+      throw error;
     }
   }
 }

@@ -52,6 +52,7 @@ import {
   ScheduleItem,
   ScheduleList,
   ScheduleListResDto,
+  ScheduleStatistics,
   // 日程状态相关类型
   ScheduleStatus,
   ScheduleStatusOption,
@@ -150,6 +151,7 @@ export type {
   ScheduleItem,
   ScheduleList,
   ScheduleListResDto,
+  ScheduleStatistics,
   UpdateScheduleStatus
 }
 

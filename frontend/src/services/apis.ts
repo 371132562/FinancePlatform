@@ -46,6 +46,7 @@ export const scheduleCreateApiUrl = '/schedule/create' // 创建日程
 export const scheduleUpdateStatusApiUrl = '/schedule/updateStatus' // 更新日程状态
 export const scheduleDeleteApiUrl = '/schedule/delete' // 删除日程
 export const scheduleCommentCreateApiUrl = '/schedule/comment/create' // 创建回复
+export const scheduleStatisticsApiUrl = '/schedule/statistics' // 获取日程统计数据
 
 // 通知相关 API
 export const notificationListApiUrl = '/notification/list' // 获取通知列表

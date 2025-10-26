@@ -12,6 +12,8 @@ import type { ScheduleList } from '@/types'
 import { getScheduleStatusOptions, ScheduleItem } from '@/types'
 import { dayjs } from '@/utils/dayjs'
 
+import ScheduleStatistics from './components/ScheduleStatistics'
+
 const { Option } = Select
 const { TextArea } = Input
 const { Search } = Input
@@ -30,6 +32,7 @@ const ScheduleList: FC = () => {
   const createSchedule = useScheduleStore(state => state.createSchedule)
   const updateScheduleStatus = useScheduleStore(state => state.updateScheduleStatus)
   const deleteSchedule = useScheduleStore(state => state.deleteSchedule)
+  const fetchStatistics = useScheduleStore(state => state.fetchStatistics)
 
   const userList = useUserStore(state => state.userList)
   const fetchUserList = useUserStore(state => state.fetchUserList)
@@ -51,6 +54,10 @@ const ScheduleList: FC = () => {
   useEffect(() => {
     fetchScheduleList(searchParams)
     fetchUserList()
+    // 只有管理员才获取统计数据
+    if (canDelete) {
+      fetchStatistics()
+    }
   }, [])
 
   // useMemo - 派生变量
@@ -218,6 +225,9 @@ const ScheduleList: FC = () => {
 
   return (
     <div className="w-full max-w-7xl">
+      {/* 统计看板 */}
+      <ScheduleStatistics />
+
       {/* 搜索和筛选区域 */}
       <div className="mb-4 flex justify-between">
         <div className="flex items-center space-x-4">
